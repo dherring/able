@@ -1,5 +1,51 @@
 (in-package :able)
 
+;;; Sequence and string utils
+
+(defun split (string char)
+  "Split string on char."
+  (let ((string (string-right-trim " " string)))
+    (loop for i = 0 then (1+ j)
+      as j = (position char string :start i)
+      collect (subseq string i j)
+      while j)))
+
+(defun string-replace (string from to)
+  (map 'string (lambda (char)
+                 (if (eq char from)
+                     to
+                     char))
+    string))
+
+(defun split-at (collection n)
+  "Split a sequence at position 'n', returning both halves."
+  (when (< n (length collection))
+    (values (subseq collection 0 n)
+      (subseq collection n))))
+
+;(defun cl-user::sload (name)
+;  (asdf:oos 'asdf:load-op name))
+
+(defun take (list n)
+  (let ((len (length list)))
+    (butlast list (max (min len (- len n)) 0))))
+
+(defun foldl (fun id list)
+  (reduce (lambda (x y) (funcall fun x y)) list :initial-value id))
+  
+(defun randoms (count &optional (limit 64))
+  "Generate a list of size 'count' random numbers bounded by 'limit'"
+  (loop repeat count collect (random limit)))
+
+(defun prefix-p (sequence prefix &optional (start 0))
+  "Is 'prefix' the prefix of 'sequence', optionally starting at 'start'."
+  (let ((seq-len (length sequence))
+        (pre-len (length prefix)))
+    (if (> (+ start pre-len) seq-len)
+        nil
+        (equalp (subseq sequence start (+ start pre-len)) prefix))))
+
+
 ;;;;;;;;;;;;;; file and directry handling ;;;;;;;;;;;;;;
 
 (defun deduce-path-separator (pathstring)
@@ -210,61 +256,3 @@
             (ccl:external-process-input-stream p))))
       (sleep 1))
     process))
-    
-(defun split (string char)
-  "Split string on char."
-  (let ((string (string-right-trim " " string)))
-    (loop for i = 0 then (1+ j)
-      as j = (position char string :start i)
-      collect (subseq string i j)
-      while j)))
-
-(defun string-replace (string from to)
-  (map 'string (lambda (char)
-                 (if (eq char from)
-                     to
-                     char))
-    string))
-
-(defun split-at (collection n)
-  "Split a sequence at position 'n', returning both halves."
-  (when (< n (length collection))
-    (values (subseq collection 0 n)
-      (subseq collection n))))
-
-;(defun cl-user::sload (name)
-;  (asdf:oos 'asdf:load-op name))
-
-(defun take (list n)
-  (let ((len (length list)))
-    (butlast list (max (min len (- len n)) 0))))
-
-(defun foldl (fun id list)
-  (reduce (lambda (x y) (funcall fun x y)) list :initial-value id))
-  
-(defun randoms (count &optional (limit 64))
-  "Generate a list of size 'count' random numbers bounded by 'limit'"
-  (loop repeat count collect (random limit)))
-
-(defun prefix-p (sequence prefix &optional (start 0))
-  "Is 'prefix' the prefix of 'sequence', optionally starting at 'start'."
-  (let ((seq-len (length sequence))
-        (pre-len (length prefix)))
-    (if (> (+ start pre-len) seq-len)
-        nil
-        (equalp (subseq sequence start (+ start pre-len)) prefix))))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
