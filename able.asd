@@ -13,8 +13,8 @@
   :depends-on (:ltk :trivial-gray-streams :cl-fad)
   :serial t
   :components ((:file "defpackage")
-               (:file "macros")
                (:file "config")
+               (:file "macros")
                (:file "utils")
                (:file "tstree")
                (:file "gui")
