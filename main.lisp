@@ -479,7 +479,7 @@
   (setf (edit-ctrl txt) (ltk:textbox txt))
   (ltk:grid-forget (ltk::hscroll txt))  ; remove the horizontal scroll-bar
   (let ((edit-ctrl (ltk:textbox txt)))
-    (ltk:configure (edit-ctrl txt) :font *buffer-font* :background *highlight-background*
+    (ltk:configure (edit-ctrl txt) :font *buffer-font*
       :foreground *highlight-text* :relief :groove :undo 0 :insertbackground *highlight-text*)
     (ltk:bind edit-ctrl "<KeyPress>"
       (lambda (evt) (unless (plaintextp txt) (on-key-down edit-ctrl evt))))
@@ -514,7 +514,7 @@
       (lambda (evt) (unless (plaintextp txt)
                       (on-ctrl-left-bracket-key edit-ctrl evt))) :exclusive t)
     (ltk:bind edit-ctrl "<Escape>" #'on-escape :exclusive t)
-    (ltk:tag-configure (edit-ctrl txt) "parens" "background" *highlight-paren-match*)
+    ;;(ltk:tag-configure (edit-ctrl txt) "parens" "background" *highlight-paren-match*)
     (ltk:tag-configure (edit-ctrl txt) "keywords" "foreground" *highlight-primary*)
     (ltk:tag-configure (edit-ctrl txt) "user" "foreground" *highlight-secondary*)
     (ltk:tag-configure (edit-ctrl txt) "comments" "foreground" *highlight-comments*)))
@@ -657,7 +657,7 @@
     (ltk:tag-configure text "error" "foreground" *highlight-error*)
     (ltk:tag-configure text "parens" "background" *highlight-paren-match*)
     (ltk:tag-configure text "prompt" "foreground" *highlight-secondary*)
-    (ltk:configure text :font *buffer-font* :background *highlight-background*
+    (ltk:configure text :font *buffer-font*
       :foreground *highlight-primary* :relief :groove :insertbackground *highlight-text*)
     (ltk:pack text :side :left :fill :both :expand t)
     (prompt listener)))
@@ -1201,9 +1201,9 @@
 (defun create-widgets ()
   "Creates main window, layout controls and set-up some key bindings."
   (ltk:with-ltk (:handle-errors nil :handle-warnings nil :debugger nil)
-    (setf *editor-frame* (make-instance 'ltk:frame :container nil :padx 1 :pady 1))
+    (setf *editor-frame* (make-instance 'ltk:frame :padding "\"1 1\""))
     (setf *buffer-manager* (make-instance 'buffer-manager))
-    (setf *listener* (make-instance 'listener :padx 1 :pady 1))
+    (setf *listener* (make-instance 'listener :padding "\"1 1\""))
     (setf *statusbar* (make-instance 'statusbar))
     (ltk:pack *statusbar* :side :bottom :fill :both)
     (ltk:pack *listener* :side :bottom :fill :both)
