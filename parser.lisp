@@ -1,5 +1,8 @@
 (in-package :able)
 
+(defparameter *buffer-manager* nil "Provides operations on buffers and lists of buffers")
+(defparameter *symbols* nil "Internal symbol database")
+
 (defun make-symbol-metadata (type line file)
   (let ((symbol (gensym)))
     (setf (symbol-plist symbol)
@@ -26,7 +29,7 @@
       (parse-symbol-definition line "defconstant" filename line-no)
       (parse-symbol-definition line "defclass" filename line-no)
       (parse-symbol-definition line "defstruct" filename line-no))
-    (error (ex) nil)))
+    (error (ex) (declare (ignore ex)) nil)))
 
 (defun load-definitions (filename)
   (with-open-file (stream filename)

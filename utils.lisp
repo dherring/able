@@ -115,7 +115,7 @@
     (incf temp increment)
     (if (> temp 0)
         (format nil "~a.0" temp)
-        (format nil "1.0" temp))))
+        "1.0")))
 
 (defun text-col-add (text-index increment)
   "Increments the col of a Tk text index by increment (i.e. 4.1 -> 4.2)."
@@ -228,9 +228,9 @@
   (let ((arglist))
     (handler-case
       #+:clisp (setf arglist (sys::arglist fn))
-      #+:sbcl (setf arglist (sb-introspect:function-arglist fn))
+      #+:sbcl (setf arglist (sb-introspect:function-lambda-list fn))
       #+:ccl (setf arglist (ccl:arglist fn))
-      (error (ex) (setf arglist nil)))
+      (error (ex) (declare (ignore ex)) (setf arglist nil)))
     arglist))
 
 (defun start-process (command-line)
