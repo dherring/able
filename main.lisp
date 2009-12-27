@@ -952,6 +952,67 @@
   (add-key-binding ltk::*tk* *key-quit-able* #'on-quit)
   (add-key-binding ltk::*tk* *key-reset-listener* #'on-reset-listener))
 
+(defun create-menus ()
+  (let* ((mb (ltk:make-menubar))
+         (mfile (ltk:make-menu mb "File"))
+         (medit (ltk:make-menu mb "Edit"))
+         (mbuffer (ltk:make-menu mb "Buffers"))
+         (mlisp (ltk:make-menu mb "Lisp")))
+
+    (macrolet ((with-menu (menu &body body)
+                 `(macrolet
+                      ((action (name op)
+                         `(ltk:make-menubutton ,',menu ,name #',op))
+                       (text-action (name op)
+                         ;; an action that needs the current buffer
+                         `(ltk:make-menubutton ,',menu ,name
+                                               (lambda ()
+                                                 (,op (get-current-text-ctrl *buffer-manager*)))))
+                       (separator ()
+                         `(ltk:add-separator ,',menu)))
+                    ,@body)))
+      (with-menu mfile
+        (action "New file" on-new-file)
+        (action "Open file" on-open-file)
+        (separator)
+        (action "Save file" on-save-file)
+        (action "Save as file" on-save-as-file)
+        (separator)
+        (action "Exit" on-quit))
+      (with-menu medit
+        (text-action "Cut" on-cut)
+        (text-action "Copy" on-copy)
+        (text-action "Paste" on-paste)
+        (separator)
+        (text-action "Select all" on-select-all)
+        (text-action "Reindent" on-re-indent)
+        (separator)
+        (action "Find" on-search)
+        (action "Find again" on-search-again)
+        (action "Goto line" on-goto))
+      (with-menu mbuffer
+        (action "Next buffer" on-next-file)
+        (separator)
+        (action "Close buffer" on-close-file))
+      (with-menu mlisp
+        (text-action "Macroexpand" on-macro-expand)
+        (text-action "Copy to REPL" on-copy-sexp-to-repl)
+        (ltk:make-menubutton mlisp "Complete symbol"
+                             (lambda ()
+                               (let* ((buffer (selected-buffer *buffer-manager*))
+                                      (text (ltk:textbox buffer)))
+                                 (unless (plaintextp buffer)
+                                   (on-code-complete text nil)))))
+        (text-action "CLHS lookup" on-lookup-definition)
+        (separator)
+        (action "(Re)load buffer" on-reload-file)
+        (action "Load file" on-load-file)
+        (action "Load ASDF" on-asdf-load)
+        (separator)
+        (action "Compile file" on-compile-file)
+        (separator)
+        (action "Reset listener" on-reset-listener)))))
+
 (defun on-reset-listener (&optional event)
   (reset *listener*))
 
@@ -1213,6 +1274,7 @@
     (ltk:minsize ltk::*tk* 320 200)
     (on-new-file)
     (bind-commands)
+    (create-menus)
     (focus-editor)))
 
 (defun start ()
