@@ -192,8 +192,8 @@
                 (when (not last-newline) (setf last-newline -1))
                 (setf next-space (position #\Space new-str :test #'equalp :start last-open))
                 (setf token (subseq new-str (1+ last-open) next-space))
-                (setf num-spaces (+ (get-indent-level token) (- last-open (1+ last-newline))))
-                (setf spaces (make-string num-spaces :initial-element #\Space))
+                (let ((num-spaces (+ (get-indent-level token) (- last-open (1+ last-newline)))))
+                  (setf spaces (make-string num-spaces :initial-element #\Space)))
                 (setf new-str (concatenate 'string new-str spaces))))))))
     new-str))
 
@@ -389,7 +389,7 @@
               ((= (index user-stream) (length (input-buffer user-stream)))
                (reached-end-of-output))
               (t (char (input-buffer user-stream) (index user-stream)))))
-      (error (ex) (reached-end-of-output)))))
+      (error (ex) (declare (ignore ex)) (reached-end-of-output)))))
 
 (defmethod trivial-gray-streams:stream-clear-input ((user-stream user-stream))
   (setf (input-buffer user-stream) :eof))
@@ -1247,7 +1247,7 @@
 
 (defun add-user-load-paths ()
   (loop for path in *user-load-paths* do
-        (push path asdf::*subdir-search-registry*)))
+       (push path asdf::*central-registry*)))
 
 (defun load-user-config ()
   "Allows the user to provide a ~/.able file to override any of the
