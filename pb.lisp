@@ -8,7 +8,7 @@
     (let* ((top (make-instance 'frame))
            (tree (make-instance 'treeview
                                 :master top
-                                :columns 2
+                                :columns "{1}"
                                 ))
            (sc (make-instance 'scrollbar :master top)))
 
@@ -21,6 +21,13 @@
                        :tree tree
                        :text p
                        ;; need to pass -values {name #syms}...
+                       :values (let ((count 0)
+                                     (pack (find-package p)))
+                                 (do-symbols (symbol pack)
+                                   (when (eql (symbol-package symbol)
+                                              pack)
+                                     (incf count)))
+                                 (list count))
                        ))
       (configure tree "yscrollcommand" (format nil "~A set" (widget-path sc)))
       (configure sc "command" (format nil "~A yview" (widget-path tree)))
@@ -84,6 +91,7 @@
                (incf row)))
         (show "name" (or (package-name package)
                          "<no-name>"))
+        (show "doc" (documentation package t))
         (show-list "nicknames" (package-nicknames package))
         (show-list "shadows" 
                    (sort (mapcar #'symbol-name
@@ -94,3 +102,58 @@
         (show-list "used by" (sorted-package-names
                               (package-used-by-list package)))
         ))))
+
+(defun show-symbols (package-designator)
+  (with-ltk ()
+    (let* ((package (find-package package-designator))
+           (top (make-instance 'frame))
+           (symbols nil)
+           (tree (make-instance 'treeview
+                                :master top
+                                :columns "{1 2 3 4}"
+                                ))
+           (sc (make-instance 'scrollbar :master top)))
+
+      (do-symbols (symbol package)
+        (push symbol symbols))
+      (flet ((treeview-column (tree column option value)
+               (format-wish "~a column ~a -~(~a~) ~a"
+                            (widget-path tree) column option value))
+             (treeview-heading (tree column option value)
+               (format-wish "~a heading ~a -~(~a~) ~a"
+                            (widget-path tree) column option value)))
+        (treeview-heading tree :#0 :text "name")
+        (treeview-heading tree 1 :text "attrs")
+        (treeview-column tree 1 :width (* 5 10)) ;; should depend on font size (here 10)
+        
+        (treeview-heading tree 2 :text "#plist")
+        (treeview-column tree 2 :width (* 5 10)) ;; should depend on font size (here 10)
+        
+        (treeview-heading tree 3 :text "status")
+        (treeview-column tree 3 :width (* 9 10)) ;; should depend on font size (here 10)
+        
+        (treeview-heading tree 4 :text "package"))
+      (configure tree "yscrollcommand" (format nil "~A set" (widget-path sc)))
+      (configure sc "command" (format nil "~A yview" (widget-path tree)))
+      (pack top :side :left :fill :both :expand t)
+      (pack tree :side :left :fill :both :expand t)
+      (pack sc :side :left :fill :y :expand nil)
+
+      
+      (dolist (name (sort (mapcar #'symbol-name symbols)
+                       #'string<))
+        (make-instance 'ltk::treeitem
+                       :tree tree
+                       :text name
+                       ;; need to pass -values {name #syms}...
+                       :values (multiple-value-bind (symbol status)
+                                   (find-symbol name package)
+                                 (list (concatenate
+                                        'string
+                                        (when (boundp symbol) "b")
+                                        (when (constantp symbol) "c")
+                                        (when (fboundp symbol) "f")
+                                        (when (keywordp symbol) "k"))
+                                       (length (symbol-plist symbol))
+                                       status
+                                       (package-name (symbol-package symbol)))))))))
