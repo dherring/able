@@ -116,23 +116,18 @@
 
       (do-symbols (symbol package)
         (push symbol symbols))
-      (flet ((treeview-column (tree column option value)
-               (format-wish "~a column ~a -~(~a~) ~a"
-                            (widget-path tree) column option value))
-             (treeview-heading (tree column option value)
-               (format-wish "~a heading ~a -~(~a~) ~a"
-                            (widget-path tree) column option value)))
-        (treeview-heading tree :#0 :text "name")
-        (treeview-heading tree 1 :text "attrs")
-        (treeview-column tree 1 :width (* 5 10)) ;; should depend on font size (here 10)
+      (treeview-heading tree :#0 :text "name")
+      (treeview-heading tree 1 :text "attrs")
+      (treeview-column tree 1 :width (* 5 10)) ;; should depend on font size (here 10)
+      
+      (treeview-heading tree 2 :text "#plist")
+      (treeview-column tree 2 :width (* 5 10)) ;; should depend on font size (here 10)
         
-        (treeview-heading tree 2 :text "#plist")
-        (treeview-column tree 2 :width (* 5 10)) ;; should depend on font size (here 10)
-        
-        (treeview-heading tree 3 :text "status")
-        (treeview-column tree 3 :width (* 9 10)) ;; should depend on font size (here 10)
-        
-        (treeview-heading tree 4 :text "package"))
+      (treeview-heading tree 3 :text "status")
+      (treeview-column tree 3 :width (* 9 10)) ;; should depend on font size (here 10)
+      
+      (treeview-heading tree 4 :text "package")
+      
       (configure tree "yscrollcommand" (format nil "~A set" (widget-path sc)))
       (configure sc "command" (format nil "~A yview" (widget-path tree)))
       (pack top :side :left :fill :both :expand t)
