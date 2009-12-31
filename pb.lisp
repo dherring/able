@@ -17,18 +17,16 @@
       
       (dolist (p (sort (mapcar #'package-name (list-all-packages))
                        #'string<))
-        (make-instance 'ltk::treeitem
-                       :tree tree
-                       :text p
-                       ;; need to pass -values {name #syms}...
-                       :values (let ((count 0)
-                                     (pack (find-package p)))
-                                 (do-symbols (symbol pack)
-                                   (when (eql (symbol-package symbol)
-                                              pack)
-                                     (incf count)))
-                                 (list count))
-                       ))
+        (treeview-insert tree nil nil nil
+                         :text p
+                         :values (let ((count 0)
+                                       (pack (find-package p)))
+                                   (do-symbols (symbol pack)
+                                     (when (eql (symbol-package symbol)
+                                                pack)
+                                       (incf count)))
+                                   (list count))
+                         ))
       (configure tree "yscrollcommand" (format nil "~A set" (widget-path sc)))
       (configure sc "command" (format nil "~A yview" (widget-path tree)))
 
@@ -40,7 +38,7 @@
                          (declare (ignore ev))
                          (let ((item (treeview-focus tree)))
                            (unless (string= item "")
-                             (format t "package: ~A~%" (ltk::treeview-item tree item :text)))))))))
+                             (format t "package: ~A~%" (treeview-item tree item :text)))))))))
 
 (defun comma-sep-string (list)
   (format nil "~{~A~#[~:;, ~]~}" list))
@@ -134,21 +132,18 @@
       (pack tree :side :left :fill :both :expand t)
       (pack sc :side :left :fill :y :expand nil)
 
-      
       (dolist (name (sort (mapcar #'symbol-name symbols)
                        #'string<))
-        (make-instance 'ltk::treeitem
-                       :tree tree
-                       :text name
-                       ;; need to pass -values {name #syms}...
-                       :values (multiple-value-bind (symbol status)
-                                   (find-symbol name package)
-                                 (list (concatenate
-                                        'string
-                                        (when (boundp symbol) "b")
-                                        (when (constantp symbol) "c")
-                                        (when (fboundp symbol) "f")
-                                        (when (keywordp symbol) "k"))
-                                       (length (symbol-plist symbol))
-                                       status
-                                       (package-name (symbol-package symbol)))))))))
+        (treeview-insert tree nil nil nil
+                         :text name
+                         :values (multiple-value-bind (symbol status)
+                                     (find-symbol name package)
+                                   (list (concatenate
+                                          'string
+                                          (when (boundp symbol) "b")
+                                          (when (constantp symbol) "c")
+                                          (when (fboundp symbol) "f")
+                                          (when (keywordp symbol) "k"))
+                                         (length (symbol-plist symbol))
+                                         status
+                                         (package-name (symbol-package symbol)))))))))
