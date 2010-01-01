@@ -17,7 +17,7 @@
       
       (dolist (p (sort (mapcar #'package-name (list-all-packages))
                        #'string<))
-        (treeview-insert tree nil nil nil
+        (treeview-insert tree
                          :text p
                          :values (let ((count 0)
                                        (pack (find-package p)))
@@ -114,8 +114,14 @@
 
       (do-symbols (symbol package)
         (push symbol symbols))
-      (treeview-heading tree :#0 :text "name")
-      (treeview-heading tree 1 :text "attrs")
+      (treeview-heading tree :#0
+                        :text "name"
+                        :command (lambda ()
+                                   (print "sort by name")))
+      (treeview-heading tree 1
+                        :text "attrs"
+                        :command (lambda ()
+                                   (print "sort by attrs")))
       (treeview-column tree 1 :width (* 5 10)) ;; should depend on font size (here 10)
       
       (treeview-heading tree 2 :text "#plist")
@@ -134,7 +140,7 @@
 
       (dolist (name (sort (mapcar #'symbol-name symbols)
                        #'string<))
-        (treeview-insert tree nil nil nil
+        (treeview-insert tree
                          :text name
                          :values (multiple-value-bind (symbol status)
                                      (find-symbol name package)
