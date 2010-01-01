@@ -110,29 +110,41 @@
                                 :master top
                                 :columns "{1 2 3 4}"
                                 ))
-           (sc (make-instance 'scrollbar :master top)))
+           (sc (make-instance 'scrollbar :master top))
+           ;; font-width should be calculated...
+           (font-width 10))
 
-      (treeview-heading tree :#0
-                        :text "name"
-                        :command (let ((up t))
-                                   (lambda ()
-                                     (dolist (name (sort (mapcar #'symbol-name symbols)
-                                                         (if up #'string< #'string>)))
-                                       (treeview-move tree name))
-                                     (setf up (not up)))))
-      (treeview-heading tree 1
-                        :text "attrs"
-                        :command (lambda ()
-                                   (print "sort by attrs")))
-      (treeview-column tree 1 :width (* 5 10)) ;; should depend on font size (here 10)
-      
-      (treeview-heading tree 2 :text "#plist")
-      (treeview-column tree 2 :width (* 5 10)) ;; should depend on font size (here 10)
+      (macrolet
+          ((sort-col (accessor up down)
+             `(let ((up t))
+                (lambda ()
+                  (dolist (item (setf symbols
+                                      (stable-sort symbols
+                                                   (if up ,up ,down)
+                                                   :key ,accessor)))
+                    (treeview-move tree (car item)))
+                  (setf up (not up))))))
+        (treeview-heading tree :#0
+                          :text "name"
+                          :command (sort-col #'first #'string< #'string>))
+        (treeview-heading tree 1
+                          :text "attrs"
+                          :command (sort-col #'second #'string< #'string>))
+        (treeview-column tree 1 :width (* 5 font-width))
         
-      (treeview-heading tree 3 :text "status")
-      (treeview-column tree 3 :width (* 9 10)) ;; should depend on font size (here 10)
+        (treeview-heading tree 2
+                          :text "#plist"
+                          :command (sort-col #'third #'< #'>))
+        (treeview-column tree 2 :width (* 5 font-width))
+        
+        (treeview-heading tree 3
+                          :text "status"
+                          :command (sort-col #'fourth #'string< #'string>))
+        (treeview-column tree 3 :width (* 9 font-width))
       
-      (treeview-heading tree 4 :text "package")
+        (treeview-heading tree 4
+                          :text "package"
+                          :command (sort-col #'fifth #'string< #'string>)))
       
       (configure tree "yscrollcommand" (format nil "~A set" (widget-path sc)))
       (configure sc "command" (format nil "~A yview" (widget-path tree)))
@@ -141,19 +153,21 @@
       (pack sc :side :left :fill :y :expand nil)
 
       (do-symbols (symbol package)
-        (push symbol symbols)
-        (let ((name (symbol-name symbol)))
+        (let* ((name (symbol-name symbol))
+               (values (multiple-value-bind (symbol status)
+                           (find-symbol name package)
+                         (list (concatenate
+                                'string
+                                (when (boundp symbol) "b")
+                                (when (constantp symbol) "c")
+                                (when (fboundp symbol) "f")
+                                (when (keywordp symbol) "k")
+                                (when (special-operator-p symbol) "o"))
+                               (length (symbol-plist symbol))
+                               status
+                               (package-name (symbol-package symbol))))))
+          (push (cons name values) symbols)
           (treeview-insert tree
                            :id name
                            :text name
-                           :values (multiple-value-bind (symbol status)
-                                       (find-symbol name package)
-                                     (list (concatenate
-                                            'string
-                                            (when (boundp symbol) "b")
-                                            (when (constantp symbol) "c")
-                                            (when (fboundp symbol) "f")
-                                            (when (keywordp symbol) "k"))
-                                           (length (symbol-plist symbol))
-                                           status
-                                           (package-name (symbol-package symbol))))))))))
+                           :values values))))))
