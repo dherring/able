@@ -154,23 +154,31 @@
 
       (do-symbols (symbol package)
         (let* ((name (symbol-name symbol))
+               (pack (symbol-package symbol))
+               (pname (package-name pack))
                (values (multiple-value-bind (symbol status)
                            (find-symbol name package)
                          (list (concatenate
                                 'string
-                                (when (boundp symbol) "b")
-                                (when (constantp symbol) "c")
+                                (when (boundp symbol)
+                                  (if (constantp symbol)
+                                      "c"
+                                      "b"))
                                 (when (fboundp symbol)
-                                  (if (macro-function symbol)
-                                      "m"
-                                      "f"))
+                                  (let ((mods (concatenate
+                                               'string
+                                               (when (macro-function symbol) "m")
+                                               (when (special-operator-p symbol) "o"))))
+                                    (if (string= mods "")
+                                        "f"
+                                        mods)))
                                 (when (keywordp symbol) "k")
                                 ;; this one is problematic
                                 ;;(when (compiler-macro-function name) "M")
-                                (when (special-operator-p symbol) "o"))
+                                )
                                (length (symbol-plist symbol))
                                status
-                               (package-name (symbol-package symbol))))))
+                               pname))))
           (push (cons name values) symbols)
           (treeview-insert tree
                            :id name
