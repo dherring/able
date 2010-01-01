@@ -160,8 +160,13 @@
                                 'string
                                 (when (boundp symbol) "b")
                                 (when (constantp symbol) "c")
-                                (when (fboundp symbol) "f")
+                                (when (fboundp symbol)
+                                  (if (macro-function symbol)
+                                      "m"
+                                      "f"))
                                 (when (keywordp symbol) "k")
+                                ;; this one is problematic
+                                ;;(when (compiler-macro-function name) "M")
                                 (when (special-operator-p symbol) "o"))
                                (length (symbol-plist symbol))
                                status
