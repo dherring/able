@@ -104,7 +104,7 @@
 (defun show-symbols (package-designator)
   (with-ltk ()
     (let* ((package (find-package package-designator))
-           (symbols nil)
+           (rows nil)
            (top (make-instance 'frame))
            (tree (make-instance 'treeview
                                 :master top
@@ -118,8 +118,8 @@
           ((sort-col (accessor up down)
              `(let ((up t))
                 (lambda ()
-                  (dolist (item (setf symbols
-                                      (stable-sort symbols
+                  (dolist (item (setf rows
+                                      (stable-sort rows
                                                    (if up ,up ,down)
                                                    :key ,accessor)))
                     (treeview-move tree (car item)))
@@ -178,7 +178,7 @@
                ;; status
                (second (multiple-value-list (find-symbol name package)))
                pname)))
-          (push (cons name values) symbols)
+          (push (cons name values) rows)
           (treeview-insert tree
                            :id name
                            :text name
