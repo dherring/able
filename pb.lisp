@@ -156,29 +156,28 @@
         (let* ((name (symbol-name symbol))
                (pack (symbol-package symbol))
                (pname (package-name pack))
-               (values (multiple-value-bind (symbol status)
-                           (find-symbol name package)
-                         (list (concatenate
-                                'string
-                                (when (boundp symbol)
-                                  (if (constantp symbol)
-                                      "c"
-                                      "b"))
-                                (when (fboundp symbol)
-                                  (let ((mods (concatenate
-                                               'string
-                                               (when (macro-function symbol) "m")
-                                               (when (special-operator-p symbol) "o"))))
-                                    (if (string= mods "")
-                                        "f"
-                                        mods)))
-                                (when (keywordp symbol) "k")
-                                ;; this one is problematic
-                                ;;(when (compiler-macro-function name) "M")
-                                )
-                               (length (symbol-plist symbol))
-                               status
-                               pname))))
+               (values (list (concatenate
+                              'string
+                              (when (boundp symbol)
+                                (if (constantp symbol)
+                                    "c"
+                                    "b"))
+                              (when (fboundp symbol)
+                                (let ((mods (concatenate
+                                             'string
+                                             (when (macro-function symbol) "m")
+                                             (when (special-operator-p symbol) "o"))))
+                                  (if (string= mods "")
+                                      "f"
+                                      mods)))
+                              (when (keywordp symbol) "k")
+                              ;; this one is problematic
+                              ;;(when (compiler-macro-function name) "M")
+                              )
+               (length (symbol-plist symbol))
+               ;; status
+               (second (multiple-value-list (find-symbol name package)))
+               pname)))
           (push (cons name values) symbols)
           (treeview-insert tree
                            :id name
