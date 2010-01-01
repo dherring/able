@@ -104,6 +104,7 @@
 (defun show-symbols (package-designator)
   (with-ltk ()
     (let* ((package (find-package package-designator))
+           (symbols nil)
            (rows nil)
            (top (make-instance 'frame))
            (tree (make-instance 'treeview
@@ -152,7 +153,10 @@
       (pack tree :side :left :fill :both :expand t)
       (pack sc :side :left :fill :y :expand nil)
 
+      ;; guard against do-sybmols processing the same symbol multiple times (allowed behavior)
       (do-symbols (symbol package)
+        (pushnew symbol symbols :test #'eq))
+      (dolist (symbol (reverse symbols))
         (let* ((name (symbol-name symbol))
                (pack (symbol-package symbol))
                (pname (package-name pack))
