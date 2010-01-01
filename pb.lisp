@@ -104,20 +104,22 @@
 (defun show-symbols (package-designator)
   (with-ltk ()
     (let* ((package (find-package package-designator))
-           (top (make-instance 'frame))
            (symbols nil)
+           (top (make-instance 'frame))
            (tree (make-instance 'treeview
                                 :master top
                                 :columns "{1 2 3 4}"
                                 ))
            (sc (make-instance 'scrollbar :master top)))
 
-      (do-symbols (symbol package)
-        (push symbol symbols))
       (treeview-heading tree :#0
                         :text "name"
-                        :command (lambda ()
-                                   (print "sort by name")))
+                        :command (let ((up t))
+                                   (lambda ()
+                                     (dolist (name (sort (mapcar #'symbol-name symbols)
+                                                         (if up #'string< #'string>)))
+                                       (treeview-move tree name))
+                                     (setf up (not up)))))
       (treeview-heading tree 1
                         :text "attrs"
                         :command (lambda ()
@@ -138,18 +140,20 @@
       (pack tree :side :left :fill :both :expand t)
       (pack sc :side :left :fill :y :expand nil)
 
-      (dolist (name (sort (mapcar #'symbol-name symbols)
-                       #'string<))
-        (treeview-insert tree
-                         :text name
-                         :values (multiple-value-bind (symbol status)
-                                     (find-symbol name package)
-                                   (list (concatenate
-                                          'string
-                                          (when (boundp symbol) "b")
-                                          (when (constantp symbol) "c")
-                                          (when (fboundp symbol) "f")
-                                          (when (keywordp symbol) "k"))
-                                         (length (symbol-plist symbol))
-                                         status
-                                         (package-name (symbol-package symbol)))))))))
+      (do-symbols (symbol package)
+        (push symbol symbols)
+        (let ((name (symbol-name symbol)))
+          (treeview-insert tree
+                           :id name
+                           :text name
+                           :values (multiple-value-bind (symbol status)
+                                       (find-symbol name package)
+                                     (list (concatenate
+                                            'string
+                                            (when (boundp symbol) "b")
+                                            (when (constantp symbol) "c")
+                                            (when (fboundp symbol) "f")
+                                            (when (keywordp symbol) "k"))
+                                           (length (symbol-plist symbol))
+                                           status
+                                           (package-name (symbol-package symbol))))))))))
