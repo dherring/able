@@ -116,7 +116,7 @@
            (font-width 10))
 
       (macrolet
-          ((sort-col (accessor up down)
+          ((sort-col (accessor &optional (up '#'string<) (down '#'string>))
              `(let ((up t))
                 (lambda ()
                   (dolist (item (setf rows
@@ -127,10 +127,10 @@
                   (setf up (not up))))))
         (treeview-heading tree :#0
                           :text "name"
-                          :command (sort-col #'first #'string< #'string>))
+                          :command (sort-col #'first))
         (treeview-heading tree 1
                           :text "attrs"
-                          :command (sort-col #'second #'string< #'string>))
+                          :command (sort-col #'second))
         (treeview-column tree 1 :width (* 5 font-width))
         
         (treeview-heading tree 2
@@ -140,12 +140,12 @@
         
         (treeview-heading tree 3
                           :text "status"
-                          :command (sort-col #'fourth #'string< #'string>))
+                          :command (sort-col #'fourth))
         (treeview-column tree 3 :width (* 9 font-width))
       
         (treeview-heading tree 4
                           :text "package"
-                          :command (sort-col #'fifth #'string< #'string>)))
+                          :command (sort-col #'fifth)))
       
       (configure tree "yscrollcommand" (format nil "~A set" (widget-path sc)))
       (configure sc "command" (format nil "~A yview" (widget-path tree)))
