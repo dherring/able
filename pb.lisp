@@ -1,7 +1,10 @@
 (defpackage :able.pb
-  (:use :cl :ltk :able))
+  (:use :cl :ltk :able)
+  (:shadow :inspect))
 
 (in-package :able.pb)
+
+(defgeneric inspect (thing &optional parent-frame))
 
 (defun package-browser ()
   (with-ltk ()
@@ -38,21 +41,37 @@
                          (declare (ignore ev))
                          (let ((item (treeview-focus tree)))
                            (unless (string= item "")
-                             (format t "package: ~A~%" (treeview-item tree item :text)))))))))
+                             (let ((name (treeview-item tree item :text))
+                                   (top (make-instance 'toplevel)))
+                               (format t "package: ~A~%" name)
+                               (wm-title top "Package inspector")
+                               (inspect (find-package name) top))
+                             )))))))
 
 (defun comma-sep-string (list)
   (format nil "~{~A~#[~:;, ~]~}" list))
 (defun sorted-package-names (package-list)
   (sort (mapcar #'package-name package-list)
         #'string<))
-(defun show-package (name)
+
+(defmacro ensure-ltk ((&rest options &key (debug 2) &allow-other-keys)
+                      &body body)
+  "Wrap BODY in with-ltk unless a connection already exists."
+  (declare (ignore debug))
+  (let ((fname (gensym)))
+    `(flet ((,fname () ,@body))
+       (if (wish-stream *wish*)
+           (,fname)
+           (with-ltk ,options (,fname))))))
+
+(defmethod inspect ((package package) &optional parent-frame)
   #| TODO: add buttons to manipulate the package
   intern, import, export, rename, delete, use-package, etc.
   Basically everything in CLHS 11.2.
   |#
-  (with-ltk ()
-    (let* ((package (find-package name))
-           (top (make-instance 'frame))
+  (ensure-ltk ()
+    (let* ((top (make-instance 'frame
+                               :master parent-frame))
            (row 0))
       ;;(wm-title *tk* "show-package")
       ;;(pack top :fill :both :expand t)
