@@ -42,10 +42,13 @@
                          (let ((item (treeview-focus tree)))
                            (unless (string= item "")
                              (let ((name (treeview-item tree item :text))
-                                   (top (make-instance 'toplevel)))
+                                   (top (make-instance 'toplevel))
+                                   (tops (make-instance 'toplevel)))
                                (format t "package: ~A~%" name)
                                (wm-title top "Package inspector")
-                               (inspect (find-package name) top))
+                               (inspect (find-package name) top)
+                               (wm-title tops "Symbol inspector")
+                               (show-symbols name tops))
                              )))))))
 
 (defun comma-sep-string (list)
@@ -120,12 +123,13 @@
                               (package-used-by-list package)))
         ))))
 
-(defun show-symbols (package-designator)
-  (with-ltk ()
+(defun show-symbols (package-designator &optional parent-frame)
+  (ensure-ltk ()
     (let* ((package (find-package package-designator))
            (symbols nil)
            (rows nil)
-           (top (make-instance 'frame))
+           (top (make-instance 'frame
+                               :master parent-frame))
            (tree (make-instance 'treeview
                                 :master top
                                 :columns "{1 2 3 4}"
