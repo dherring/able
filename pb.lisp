@@ -1,3 +1,33 @@
+#| Note: I'm gonna have to stop working on this for a while; the following is a dump of some ideas I had.
+
+The current code "works" from a single (package-browser) entry, but it is not ready for end users.  SHOW-SYMBOLS has probably the "best" coding style in this file; but I'm still learning Ltk.
+
+The goal was to have a menu entry in ABLE that opens a window something like
+
+=ABLE CL browser=
++-------+-------+
+|package|show   |
+|browser|symbols|
++-------+-------+
+|inspect|inspect|
+|package|symbol |
++-------+-------+
+
+Clicking a package in package-browser would update (inspect package) and show-symbols.  Clicking a symbol in show-symbols would update (inspect symbol).  (inspect symbol) would be like (inspect package) but for symbol-name, symbol-function, etc.
+
+Eventually add in some inspector-like functionality, a web-browser style navigation system, etc.
+
+Navigation:
+forward, backward, history dropdown, package name entry, symbol name entry (both with fuzz)
+"bookmarks" for storing symbols (grey out those not in current image)
+
+Inspector interface:
+press i to inspect the currently highlighted entry
+press m to modify it
+
+When showing lists/arrays, have a way to (auto?)select between comma-separated lists, listboxes, and comboboxes.
+|#
+
 (defpackage :able.pb
   (:use :cl :ltk :able)
   (:shadow :inspect))
