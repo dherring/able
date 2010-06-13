@@ -78,7 +78,9 @@ When showing lists/arrays, have a way to (auto?)select between comma-separated l
                                (wm-title top "Package inspector")
                                (inspect (find-package name) top)
                                (wm-title tops "Symbol inspector")
-                               (show-symbols name tops))
+                               (make-instance 'symbol-frame
+                                              :package-designator name
+                                              :master tops))
                              )))))))
 
 (defun comma-sep-string (list)
