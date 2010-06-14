@@ -76,7 +76,9 @@ When showing lists/arrays, have a way to (auto?)select between comma-separated l
                                    (tops (make-instance 'toplevel)))
                                (format t "package: ~A~%" name)
                                (wm-title top "Package inspector")
-                               (inspect (find-package name) top)
+                               (make-instance 'package-frame
+                                              :package-designator (find-package name)
+                                              :master top)
                                (wm-title tops "Symbol inspector")
                                (make-instance 'symbol-frame
                                               :package-designator name
