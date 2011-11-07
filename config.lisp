@@ -92,9 +92,16 @@
   by the browser specified in *web-browser* below")
 
 (defparameter *web-browser*
-  #+:able-windows "C:/Progra~1/Intern~1/iexplore.exe"
-  #+:able-linux "/usr/bin/firefox"
-  #+:able-macosx "open")
+  (first
+   (list
+    #+(or (and :clisp :win32) (and :sbcl :win32) (and :ccl :windows))
+    "C:/Progra~1/Intern~1/iexplore.exe"
+    #+(or (and :clisp :unix (not :macos)) (and :sbcl :linux) (and :ccl :linux))
+    "/usr/bin/firefox"
+    #+(or (and :ccl :darwin) (and :clisp :macos) (and :sbcl :darwin))
+    "open"
+    ;; default
+    "firefox")))
 
 (defparameter *user-load-paths* nil
   "A list of additional user specified places to find systems")

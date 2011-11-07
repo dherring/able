@@ -10,22 +10,3 @@
 
 ;;; SBCL needs to load it's introspection library.
 #+:sbcl (require :sb-introspect)
-
-;;; Operating system detection.
-#+(or (and :clisp :win32) (and :sbcl :win32) (and :ccl :windows))
-  (push :able-windows *features*)
-#+(or (and :clisp :unix (not :macos)) (and :sbcl :linux) (and :ccl :linux))
-  (push :able-linux *features*)
-#+(or (and :ccl :darwin) (and :clisp :macos) (and :sbcl :darwin))
-  (push :able-macosx *features*)
-
-
-
-
-
-
-
-
-
-
-
