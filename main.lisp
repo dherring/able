@@ -479,7 +479,7 @@
   (setf (edit-ctrl txt) (ltk:textbox txt))
   (ltk:grid-forget (ltk::hscroll txt))  ; remove the horizontal scroll-bar
   (let ((edit-ctrl (ltk:textbox txt)))
-    (ltk:configure (edit-ctrl txt) :font *buffer-font*
+    (ltk:configure (edit-ctrl txt) :font *buffer-font* :background *highlight-background*
       :foreground *highlight-text* :relief :groove :undo 0 :insertbackground *highlight-text*)
     (ltk:bind edit-ctrl "<KeyPress>"
       (lambda (evt) (unless (plaintextp txt) (on-key-down edit-ctrl evt))))
@@ -514,7 +514,7 @@
       (lambda (evt) (unless (plaintextp txt)
                       (on-ctrl-left-bracket-key edit-ctrl evt))) :exclusive t)
     (ltk:bind edit-ctrl "<Escape>" #'on-escape :exclusive t)
-    ;;(ltk:tag-configure (edit-ctrl txt) "parens" "background" *highlight-paren-match*)
+    (ltk:tag-configure (edit-ctrl txt) "parens" "background" *highlight-paren-match*)
     (ltk:tag-configure (edit-ctrl txt) "keywords" "foreground" *highlight-primary*)
     (ltk:tag-configure (edit-ctrl txt) "user" "foreground" *highlight-secondary*)
     (ltk:tag-configure (edit-ctrl txt) "comments" "foreground" *highlight-comments*)))
@@ -657,7 +657,7 @@
     (ltk:tag-configure text "error" "foreground" *highlight-error*)
     (ltk:tag-configure text "parens" "background" *highlight-paren-match*)
     (ltk:tag-configure text "prompt" "foreground" *highlight-secondary*)
-    (ltk:configure text :font *buffer-font*
+    (ltk:configure text :font *buffer-font* :background *highlight-background*
       :foreground *highlight-primary* :relief :groove :insertbackground *highlight-text*)
     (ltk:pack text :side :left :fill :both :expand t)
     (prompt listener)))
