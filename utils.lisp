@@ -184,7 +184,11 @@
         start end token)
     (when next-open
       (setf start (get-col-integer (strpos-to-textidx code-string next-open)))
-      (setf end (position #\Space code-string :start next-open :test #'equal))
+      (loop :for i :from (1+ next-open) :below (length code-string)
+         :do (if (member (char code-string i) '(#\Space #\Tab #\Newline) :test #'char=)
+                 (setf next-open i)
+                 (return)))
+      (setf end (position #\Space code-string :start (1+ next-open) :test #'equal))
       (setf token (subseq code-string (+ next-open 1) end)))
     (values token start end)))
 

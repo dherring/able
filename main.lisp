@@ -149,10 +149,11 @@
                                 &optional (text-to-cursor (ltk::get-text-to-cursor txt)))
   "Indents code as you type using the extensible rules of GET-INDENT-LEVEL."
   (let ((str (ltk:text txt))
-        (pos 0) (next) (start) (end) (indent) (token))
+        (pos 0) (indent))
     (setf pos (- (length text-to-cursor) 1))
     (when (and (> pos -1) (<= pos (length str)))
       (multiple-value-bind (token start end) (find-current-function str pos)
+        (declare (ignore end))
         (when token
           (setf indent (get-indent-level token))
           (setf start (+ start indent))
