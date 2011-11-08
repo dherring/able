@@ -936,22 +936,39 @@
   (hide-paren-match (inferior-win listener))
   (hide-calltip))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *keytable*
+    (list
+     (list *key-new-file* 'on-new-file)
+     (list *key-close-file* 'on-close-file)
+     (list *key-open-file* 'on-open-file)
+     (list *key-save-file* 'on-save-file)
+     (list *key-save-as-file* 'on-save-as-file)
+     (list *key-load-file* 'on-load-file)
+     (list *key-find* 'on-search)
+     (list *key-find-again* 'on-search-again)
+     (list *key-goto-line* 'on-goto)
+     (list *key-asdf-load* 'on-asdf-load)
+     (list *key-next-file* 'on-next-file)
+     (list *key-reload-file* 'on-reload-file)
+     (list *key-compile-file* 'on-compile-file)
+     (list *key-quit-able* 'on-quit)
+     (list *key-reset-listener* 'on-reset-listener))
+    "plist mapping key bindings to functions"))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (print *keytable*)
+  (defun key-function (key)
+    "look up the function for this key"
+    (second (find-if (lambda (entry) (equal key (first entry))) *keytable*)))
+
+  (defun function-key (fun)
+    "look up the key for this function"
+    (first (find-if (lambda (entry) (equal fun (second entry))) *keytable*))))
+
 (defun bind-commands ()
-  (add-key-binding ltk::*tk* *key-new-file* #'on-new-file)
-  (add-key-binding ltk::*tk* *key-close-file* #'on-close-file)
-  (add-key-binding ltk::*tk* *key-open-file* #'on-open-file)
-  (add-key-binding ltk::*tk* *key-save-file* #'on-save-file)
-  (add-key-binding ltk::*tk* *key-save-as-file* #'on-save-as-file)
-  (add-key-binding ltk::*tk* *key-load-file* #'on-load-file)  
-  (add-key-binding ltk::*tk* *key-find* #'on-search)
-  (add-key-binding ltk::*tk* *key-find-again* #'on-search-again)
-  (add-key-binding ltk::*tk* *key-goto-line* #'on-goto)
-  (add-key-binding ltk::*tk* *key-asdf-load* #'on-asdf-load)
-  (add-key-binding ltk::*tk* *key-next-file* #'on-next-file)
-  (add-key-binding ltk::*tk* *key-reload-file* #'on-reload-file)
-  (add-key-binding ltk::*tk* *key-compile-file* #'on-compile-file)
-  (add-key-binding ltk::*tk* *key-quit-able* #'on-quit)
-  (add-key-binding ltk::*tk* *key-reset-listener* #'on-reset-listener))
+  (dolist (entry *keytable*)
+    (add-key-binding ltk::*tk* (first entry) (second entry))))
 
 (defun create-menus ()
   (let* ((mb (ltk:make-menubar))
@@ -963,7 +980,10 @@
     (macrolet ((with-menu (menu &body body)
                  `(macrolet
                       ((action (name op)
-                         `(ltk:make-menubutton ,',menu ,name #',op))
+                         (let ((key (function-key op)))
+                           (if key
+                               `(ltk:make-menubutton ,',menu (format nil "~A ~A" ,name ,key) #',op)
+                               `(ltk:make-menubutton ,',menu ,name #',op))))
                        (text-action (name op)
                          ;; an action that needs the current buffer
                          `(ltk:make-menubutton ,',menu ,name
