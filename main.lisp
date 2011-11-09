@@ -476,6 +476,21 @@
       (when (string= path-name (file-path buffer))
         (return count)))))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *text-keys*
+    (list ;; format: (key action &optional suppress-in-repl)
+     (list *key-cut* 'on-cut t)
+     (list *key-copy* 'on-copy)
+     (list *key-paste* 'on-paste)
+     (list *key-select-all* 'on-select-all t)
+     (list *key-reformat* 'on-re-indent t)
+     (list *key-macro-expand* 'on-macro-expand t)
+     (list *key-copy-to-repl* 'on-copy-sexp-to-repl t)
+     ;; code-complete was suppressed, even though an implementation existed...
+     (list *key-code-complete* 'on-code-complete)
+     ;; lookup should be suppressed unless (plaintextp txt)
+     (list *key-lookup* 'on-lookup-definition))))
+
 (defmethod initialize-instance :after ((txt buffer) &key)
   (setf (edit-ctrl txt) (ltk:textbox txt))
   (ltk:grid-forget (ltk::hscroll txt))  ; remove the horizontal scroll-bar
@@ -491,16 +506,13 @@
       (lambda (evt) (declare (ignore evt)) (unless (plaintextp txt) (on-left-click edit-ctrl))))
     (ltk:bind edit-ctrl "<Map>" (lambda (evt) (declare (ignore evt)) (ltk:focus edit-ctrl)))
     (ltk:bind edit-ctrl "<<Modified>>" (lambda (evt) (on-file-modified evt)))
-    (add-key-binding edit-ctrl *key-cut* (lambda (evt) (declare (ignore evt)) (on-cut edit-ctrl)))
-    (add-key-binding edit-ctrl *key-copy* (lambda (evt) (declare (ignore evt)) (on-copy edit-ctrl)))    
-    (add-key-binding edit-ctrl *key-paste* (lambda (evt) (declare (ignore evt)) (on-paste edit-ctrl)))
-    (add-key-binding edit-ctrl *key-select-all* (lambda (evt) (declare (ignore evt)) (on-select-all edit-ctrl)))
-    (add-key-binding edit-ctrl *key-reformat* (lambda (evt) (declare (ignore evt)) (on-re-indent edit-ctrl)))
-    (add-key-binding edit-ctrl *key-macro-expand* (lambda (evt) (declare (ignore evt)) (on-macro-expand edit-ctrl)))
-    (add-key-binding edit-ctrl *key-copy-to-repl* (lambda (evt) (declare (ignore evt)) (on-copy-sexp-to-repl edit-ctrl)))
-    (add-key-binding edit-ctrl *key-code-complete* (lambda (evt) (on-code-complete edit-ctrl evt)))
-    (add-key-binding edit-ctrl *key-lookup*
-      (lambda (evt) (declare (ignore evt)) (unless (plaintextp txt) (on-lookup-definition edit-ctrl))))
+    (dolist (binding *text-keys*)
+      ;;(format t "~%binding ~A to ~A" (first binding) (second binding))
+      (add-key-binding edit-ctrl (first binding)
+                       (lambda (evt)
+                         (declare (ignore evt))
+                         ;;(format t "~%calling ~A" (second binding))
+                         (funcall (second binding) edit-ctrl))))
     (ltk:bind edit-ctrl "<Return>"
       (lambda (evt) (unless (plaintextp txt) (on-return-key edit-ctrl evt))))
     (ltk:bind edit-ctrl "<space>"
@@ -645,10 +657,14 @@
     (ltk:bind text "<Down>" (lambda (evt) (declare (ignore evt)) (next-command listener)) :exclusive t)
     (ltk:bind text "<BackSpace>" (lambda (evt) (declare (ignore evt)) (repl-delete-key-down listener)) :exclusive t)
     (ltk:bind text "<Escape>" (lambda (evt) (declare (ignore evt)) (clear listener)) :exclusive t)
-    (add-key-binding text *key-code-complete* (lambda (evt) (on-code-complete listener evt)))
-    (add-key-binding text *key-copy* (lambda (evt) (declare (ignore evt)) (on-copy text) t))
-    (add-key-binding text *key-paste* (lambda (evt) (declare (ignore evt)) (on-paste text) t))
-    (add-key-binding text *key-lookup* (lambda (evt) (declare (ignore evt)) (on-lookup-definition text)))
+    (dolist (binding *text-keys*)
+      (unless (third binding)
+        ;;(format t "~%repl: binding ~A to ~A" (first binding) (second binding))
+        (add-key-binding text (first binding)
+                         (lambda (evt)
+                           (declare (ignore evt))
+                           ;;(format t "~%calling ~A" (second binding))
+                           (funcall (second binding) text)))))
     (ltk:bind text "<Escape>" (lambda (evt) (declare (ignore evt)) (clear listener)) :exclusive t)
     (ltk:bind text "<Key-bracketleft>"
       (lambda (evt) (on-left-bracket-key text evt)) :exclusive t)
@@ -722,7 +738,7 @@
                   (pathname-completions-to-string pathname-matches)))))))
       (error (ex) (ltk:do-msg ex)))))
 
-(defmethod on-code-complete ((listener listener) event)
+(defmethod on-code-complete ((listener listener))
   (case (complete-mode listener)
     (symbol
       (code-complete (inferior-win listener))
@@ -1023,7 +1039,7 @@
                                (let* ((buffer (selected-buffer *buffer-manager*))
                                       (text (ltk:textbox buffer)))
                                  (unless (plaintextp buffer)
-                                   (on-code-complete text nil)))))
+                                   (on-code-complete text)))))
         (text-action "CLHS lookup" on-lookup-definition)
         (separator)
         (action "(Re)load buffer" on-reload-file)
@@ -1245,7 +1261,7 @@
 (defmethod on-select-all ((txt ltk:text))
   (ltk::select-all txt))
 
-(defmethod on-code-complete ((text ltk:text) event)
+(defmethod on-code-complete ((text ltk:text))
   (code-complete text)
   (highlight text 'complete)
   (show-calltip text))
