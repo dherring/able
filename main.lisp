@@ -971,14 +971,15 @@
     "plist mapping key bindings to functions"))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (print *keytable*)
   (defun key-function (key)
     "look up the function for this key"
     (second (find-if (lambda (entry) (equal key (first entry))) *keytable*)))
 
   (defun function-key (fun)
     "look up the key for this function"
-    (first (find-if (lambda (entry) (equal fun (second entry))) *keytable*))))
+    (or
+     (first (find-if (lambda (entry) (equal fun (second entry))) *keytable*))
+     (first (find-if (lambda (entry) (equal fun (second entry))) *text-keys*)))))
 
 (defun bind-commands ()
   (dolist (entry *keytable*)
@@ -1000,9 +1001,13 @@
                                `(ltk:make-menubutton ,',menu ,name #',op))))
                        (text-action (name op)
                          ;; an action that needs the current buffer
-                         `(ltk:make-menubutton ,',menu ,name
-                                               (lambda ()
-                                                 (,op (get-current-text-ctrl *buffer-manager*)))))
+                         (let ((key (function-key op)))
+                           `(ltk:make-menubutton ,',menu
+                                                 ,(if key
+                                                      (format nil "~A ~A" name key)
+                                                      name)
+                                                 (lambda ()
+                                                   (,op (get-current-text-ctrl *buffer-manager*))))))
                        (separator ()
                          `(ltk:add-separator ,',menu)))
                     ,@body)))
