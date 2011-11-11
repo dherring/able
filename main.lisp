@@ -414,9 +414,7 @@
   (buffer-output user-stream character))
 
 (defmethod trivial-gray-streams:stream-write-string ((user-stream user-stream) seq &optional start end)
-  (if (and start end)
-      (buffer-output user-stream (subseq seq start end))
-      (buffer-output user-stream seq)))
+  (buffer-output user-stream (subseq seq start end)))
 
 (defmethod trivial-gray-streams:stream-write-sequence ((user-stream user-stream) seq start end &key)
   (buffer-output user-stream (subseq seq start end)))
