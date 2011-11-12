@@ -484,8 +484,8 @@
      (list *key-reformat* 'on-re-indent t)
      (list *key-macro-expand* 'on-macro-expand t)
      (list *key-copy-to-repl* 'on-copy-sexp-to-repl t)
-     ;; code-complete was suppressed, even though an implementation existed...
-     (list *key-code-complete* 'on-code-complete)
+     ;; suppress code-complete; it needs special treatment
+     (list *key-code-complete* 'on-code-complete t)
      ;; lookup should be suppressed unless (plaintextp txt)
      (list *key-lookup* 'on-lookup-definition))))
 
@@ -663,6 +663,10 @@
                            (declare (ignore evt))
                            ;;(format t "~%calling ~A" (second binding))
                            (funcall (second binding) text)))))
+    (add-key-binding text *key-code-complete*
+                     (lambda (evt)
+                       (declare (ignore evt))
+                       (on-code-complete listener)))
     (ltk:bind text "<Escape>" (lambda (evt) (declare (ignore evt)) (clear listener)) :exclusive t)
     (ltk:bind text "<Key-bracketleft>"
       (lambda (evt) (on-left-bracket-key text evt)) :exclusive t)
