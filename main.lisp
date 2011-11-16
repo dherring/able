@@ -970,6 +970,7 @@
      (list *key-next-file* 'on-next-file)
      (list *key-reload-file* 'on-reload-file)
      (list *key-compile-file* 'on-compile-file)
+     (list *key-invoke-debugger* 'on-invoke-debugger)
      (list *key-quit-able* 'on-quit)
      (list *key-reset-listener* 'on-reset-listener))
     "plist mapping key bindings to functions"))
@@ -1055,6 +1056,7 @@
         (separator)
         (action "Compile file" on-compile-file)
         (separator)
+        (action "Invoke native debugger" on-invoke-debugger)
         (action "Reset listener" on-reset-listener)))))
 
 (defun on-reset-listener (&optional event)
@@ -1172,6 +1174,21 @@
 
 (defun on-file-modified (evt)
   (pathname-message))
+
+;; When invoked as a Tk event, this bypasses the I/O redirection.
+;; Attempts to invoke the debugger within ABLE's listener are confounded
+;; by (with-able-streams).
+(defun on-invoke-debugger (&optional event)
+  "invoke the native CL debugger (including hooks such as slime)"
+  (declare (ignore event))
+  (restart-case
+      (invoke-debugger
+       (make-condition 'simple-condition
+                       :format-control "ABLE breakpoint"
+                       :format-arguments nil))
+    (return-to-able ()
+      :report "Return to ABLE"
+      t)))
 
 (defun on-quit (&optional event)
   (let ((unsaved-buffers (all-saved-buffer-p *buffer-manager*)))

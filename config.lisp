@@ -68,6 +68,7 @@
 (defparameter *key-reformat* "<Control-j>" "Indent the current form")
 (defparameter *key-macro-expand* "<Control-m>" "Macroexpand form in listener")
 (defparameter *key-copy-to-repl* "<Control-e>" "Evaluate form")
+(defparameter *key-invoke-debugger* "<Control-D>" "Invoke the native debugger")
 (defparameter *key-quit-able* "<Control-q>" "Quit ABLE")
 (defparameter *key-code-complete* "<Tab>" "Cycle available code completions")
 (defparameter *key-lookup* "<Control-d>" "Find definition in Hyperspec or src")
