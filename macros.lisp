@@ -27,8 +27,11 @@
           (*trace-output* stream)
           ;(*error-output* stream)
           (*standard-input* stream)
-          (*terminal-io* stream)
-          (*debug-io* stream))
+          ;; rebinding *terminal-io* breaks SBCL's terminal debugger
+          ;(*terminal-io* stream)
+          ;; rebinding *debug-io* breaks Slime's debugger and SBCL's terminal
+          ;(*debug-io* stream)
+          )
      ,@body
      (flush stream)))
 
