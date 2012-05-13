@@ -51,10 +51,12 @@
 
 (defparameter *key-new-file* "<Control-n>" "Create a new file")
 (defparameter *key-open-file* "<Control-o>" "Open a new file")
+(defparameter *key-open-file-browser* "<Control-Alt-o>" "Open a new file, with browser GUI")
 (defparameter *key-load-file* "<Control-l>" "Load a file from disc")
 (defparameter *key-close-file* "<Control-w>" "Close a file")
 (defparameter *key-save-file* "<Control-s>" "Save the current file")
 (defparameter *key-save-as-file* "<Control-S>" "Save the current file under a new name")
+(defparameter *key-save-as-file-browser* "<Control-Alt-s>" "Save the current file under a new name, with browser GUI")
 (defparameter *key-reload-file* "<Control-r>" "Re-load the current file")
 (defparameter *key-compile-file* "<Control-k>" "Compile the current file")
 (defparameter *key-next-file* "<Control-b>" "Cycle through open files")

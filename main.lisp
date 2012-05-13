@@ -964,8 +964,10 @@
      (list *key-new-file* 'on-new-file)
      (list *key-close-file* 'on-close-file)
      (list *key-open-file* 'on-open-file)
+     (list *key-open-file-browser* 'on-open-file-browser)
      (list *key-save-file* 'on-save-file)
      (list *key-save-as-file* 'on-save-as-file)
+     (list *key-save-as-file-browser* 'on-save-as-file-browser)
      (list *key-load-file* 'on-load-file)
      (list *key-find* 'on-search)
      (list *key-find-again* 'on-search-again)
@@ -1024,9 +1026,11 @@
       (with-menu mfile
         (action "New file" on-new-file)
         (action "Open file" on-open-file)
+	(action "Open file browser" on-open-file-browser)
         (separator)
         (action "Save file" on-save-file)
         (action "Save as file" on-save-as-file)
+	(action "Save as file browser" on-save-as-file-browser)
         (separator)
         (action "Exit" on-quit))
       (with-menu medit
@@ -1101,6 +1105,10 @@
   (let ((filepath (get-filename *listener*)))
     (open-file filepath)))
 
+(defun on-open-file-browser (&optional event)
+  (declare (ignore event))
+  (open-file (ltk:get-open-file)))
+
 (defun on-load-file (&optional event)
   (let* ((filepath (get-filename *listener* "load:"))
          (pathname (open-file filepath)))
@@ -1132,6 +1140,11 @@
   (let* ((file (selected-buffer *buffer-manager*))
          (path (get-filename *listener* "save:")))
     (save-file file path)))
+
+(defun on-save-as-file-browser (&optional event)
+  (save-file
+    (selected-buffer *buffer-manager*)
+    (ltk:get-save-file)))
 
 (defun on-reload-file (&optional event)
   (let* ((buffer (selected-buffer *buffer-manager*))
