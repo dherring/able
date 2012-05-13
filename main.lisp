@@ -505,12 +505,15 @@
     (ltk:bind edit-ctrl "<Map>" (lambda (evt) (declare (ignore evt)) (ltk:focus edit-ctrl)))
     (ltk:bind edit-ctrl "<<Modified>>" (lambda (evt) (on-file-modified evt)))
     (dolist (binding *text-keys*)
-      ;;(format t "~%binding ~A to ~A" (first binding) (second binding))
-      (add-key-binding edit-ctrl (first binding)
-                       (lambda (evt)
-                         (declare (ignore evt))
-                         ;;(format t "~%calling ~A" (second binding))
-                         (funcall (second binding) edit-ctrl))))
+      ;; dolist may re-use the binding... force unique bindings (test in clisp)
+      (destructuring-bind (key action &optional suppress-in-repl) binding
+        (declare (ignore suppress-in-repl))
+        ;;(format t "~%binding ~A to ~A" key action)
+        (add-key-binding edit-ctrl key
+          (lambda (evt)
+            (declare (ignore evt))
+            ;;(format t "~%calling ~A" action)
+            (funcall action edit-ctrl)))))
     (ltk:bind edit-ctrl "<Return>"
       (lambda (evt) (unless (plaintextp txt) (on-return-key edit-ctrl evt))))
     (ltk:bind edit-ctrl "<space>"
@@ -656,17 +659,18 @@
     (ltk:bind text "<BackSpace>" (lambda (evt) (declare (ignore evt)) (repl-delete-key-down listener)) :exclusive t)
     (ltk:bind text "<Escape>" (lambda (evt) (declare (ignore evt)) (clear listener)) :exclusive t)
     (dolist (binding *text-keys*)
-      (unless (third binding)
-        ;;(format t "~%repl: binding ~A to ~A" (first binding) (second binding))
-        (add-key-binding text (first binding)
-                         (lambda (evt)
-                           (declare (ignore evt))
-                           ;;(format t "~%calling ~A" (second binding))
-                           (funcall (second binding) text)))))
+      (destructuring-bind (key action &optional suppress-in-repl) binding
+        (unless suppress-in-repl
+          ;;(format t "~%repl: binding ~A to ~A" key action)
+          (add-key-binding text key
+            (lambda (evt)
+              (declare (ignore evt))
+              ;;(format t "~%calling ~A" action)
+              (funcall action text))))))
     (add-key-binding text *key-code-complete*
-                     (lambda (evt)
-                       (declare (ignore evt))
-                       (on-code-complete listener)))
+      (lambda (evt)
+        (declare (ignore evt))
+        (on-code-complete listener)))
     (ltk:bind text "<Escape>" (lambda (evt) (declare (ignore evt)) (clear listener)) :exclusive t)
     (ltk:bind text "<Key-bracketleft>"
       (lambda (evt) (on-left-bracket-key text evt)) :exclusive t)
@@ -988,7 +992,8 @@
 
 (defun bind-commands ()
   (dolist (entry *keytable*)
-    (add-key-binding ltk::*tk* (first entry) (second entry))))
+    (destructuring-bind (key action) entry
+      (add-key-binding ltk::*tk* key action))))
 
 (defun create-menus ()
   (let* ((mb (ltk:make-menubar))
