@@ -536,6 +536,17 @@
 (defmethod get-current-text-ctrl ((buffer-manager buffer-manager))
   (edit-ctrl (selected-buffer buffer-manager)))
 
+(defun update-current-buffers (buffer-manager)
+  (ltk:menu-delete *buffer-menubar* 5)
+  (loop for b in (reverse (buffers buffer-manager))
+    for c from 1
+    do (ltk:make-menubutton
+         *buffer-menubar*
+         (format nil "~A: ~A" c (file-path b))
+         (let ((n c))
+           (lambda ()
+             (on-select-file n))))))
+
 (defmethod add-buffer ((buffer-manager buffer-manager) file-path &optional open-file-p)
   (if (not (find-buffer buffer-manager file-path))
       (let* ((newbuffer (make-instance 'buffer :file-path file-path :master *editor-frame*))
@@ -546,7 +557,8 @@
         (ltk:configure text-ctrl :undo 1)
         (ltk::set-cursor-pos text-ctrl "1.0")
         (push newbuffer (buffers buffer-manager))))
-  (select-buffer buffer-manager file-path))
+  (select-buffer buffer-manager file-path)
+  (update-current-buffers buffer-manager))
 
 (defmethod find-buffer ((buffer-manager buffer-manager) path-name)
   (loop for buffer in (reverse (buffers buffer-manager)) do
@@ -621,6 +633,7 @@
 
 (defmethod close-buffer ((buffer buffer) (buffer-manager buffer-manager))
   (setf (buffers buffer-manager) (remove buffer (buffers buffer-manager) :test #'equalp))
+  (update-current-buffers buffer-manager)
   (let ((nextfile (get-next-buffer buffer buffer-manager)))
     (select-next-buffer buffer-manager buffer)
     (ltk:pack-forget buffer)
@@ -974,6 +987,7 @@
      (list *key-goto-line* 'on-goto)
      (list *key-asdf-load* 'on-asdf-load)
      (list *key-next-file* 'on-next-file)
+     (list *key-select-file* 'on-select-file)
      (list *key-reload-file* 'on-reload-file)
      (list *key-compile-file* 'on-compile-file)
      (list *key-invoke-debugger* 'on-invoke-debugger)
@@ -997,12 +1011,15 @@
     (destructuring-bind (key action) entry
       (add-key-binding ltk::*tk* key action))))
 
+(defparameter *buffer-menubar* nil "store a reference to the buffer menubar for listing the open buffers")
+
 (defun create-menus ()
   (let* ((mb (ltk:make-menubar))
          (mfile (ltk:make-menu mb "File"))
          (medit (ltk:make-menu mb "Edit"))
          (mbuffer (ltk:make-menu mb "Buffers"))
          (mlisp (ltk:make-menu mb "Lisp")))
+    (setf *buffer-menubar* mbuffer)
 
     (macrolet ((with-menu (menu &body body)
                  `(macrolet
@@ -1047,7 +1064,12 @@
       (with-menu mbuffer
         (action "Next buffer" on-next-file)
         (separator)
-        (action "Close buffer" on-close-file))
+        (action "Close buffer" on-close-file)
+	(separator)
+	(action "Select buffer" on-select-file)
+	;; sacrificial placeholder for the current buffer list
+	;; update the magic number in update-current-buffers when adding/removing entries
+	(ltk:make-menubutton mbuffer "" nil))
       (with-menu mlisp
         (text-action "Macroexpand" on-macro-expand)
         (text-action "Copy to REPL" on-copy-sexp-to-repl)
@@ -1189,6 +1211,15 @@
 
 (defun on-next-file (&optional event)
   (select-next-buffer *buffer-manager* (selected-buffer *buffer-manager*)))
+
+(defun on-select-file (&optional n)
+  (unless (integerp n)
+    (setf n (parse-integer (input-prompt *listener* "buffer number:"))))
+  (when (integerp n)
+    (select-buffer *buffer-manager*
+      ;; compensate for the reversed order
+      (- (length (buffers *buffer-manager*)) n)))
+  (prompt *listener* :clear t))
 
 (defun on-file-modified (evt)
   (pathname-message))
@@ -1353,9 +1384,9 @@
       (ltk:on-close ltk::*tk* 'on-quit)
       (ltk:set-geometry ltk::*tk* *window-width* *window-height* *window-x* *window-y*)
       (ltk:minsize ltk::*tk* 320 200)
-      (on-new-file)
       (bind-commands)
       (create-menus)
+      (on-new-file) ;; create the new file after the menus so it is listed in the current buffer list
 
       (when old-manager
         (dolist (buf (reverse (buffers old-manager)))

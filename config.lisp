@@ -60,6 +60,7 @@
 (defparameter *key-reload-file* "<Control-r>" "Re-load the current file")
 (defparameter *key-compile-file* "<Control-k>" "Compile the current file")
 (defparameter *key-next-file* "<Control-b>" "Cycle through open files")
+(defparameter *key-select-file* "<Control-B>" "Select open file")
 (defparameter *key-find* "<Control-f>" "Find text in current file")
 (defparameter *key-find-again* "<Control-g>" "Repeat the previous search")
 (defparameter *key-cut* "<Control-x>" "Cut the selected text")
