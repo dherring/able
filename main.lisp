@@ -208,8 +208,15 @@
         (let ((new-str (format-lisp-form block))
               (start-index (strpos-to-textidx str start))
               (end-index (strpos-to-textidx str end)))
+          ;; the pretty printer likes adding extra newlines (see e.g. http://www.clisp.org/impnotes/faq.html#faq-pp-newline)
+          ;; these generally aren't appropriate when just changing indentation...
+          #| leaves two steps in the undo history:
           (ltk::delete-text txt start-index end-index)
-          (ltk::insert-text txt new-str)
+          (let ((*print-pretty* nil))
+            (ltk::insert-text txt new-str))
+          |#
+          (let ((*print-pretty* nil))
+            (ltk::format-wish "~a replace ~a ~a \"~a\"" (ltk::widget-path txt) start-index end-index (ltk::tkescape new-str)))
           (apply-highlight txt start-index end-index)))
       (error (ex) (error-message ex)))))
 
