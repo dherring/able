@@ -6,6 +6,7 @@
 (defparameter *editor-frame* nil "Container for the text-editor control")
 (defparameter *listener* nil "The Lisp listener interface and command interpreter")
 (defparameter *statusbar* nil "The bar at the bottom of the screen")
+(defparameter *buffer-menubar* nil "store a reference to the buffer menubar for listing the open buffers")
 
 ;;; allocate sequential filenames for new files
 (let ((untitled 0))
@@ -1017,8 +1018,6 @@
   (dolist (entry *keytable*)
     (destructuring-bind (key action) entry
       (add-key-binding ltk::*tk* key action))))
-
-(defparameter *buffer-menubar* nil "store a reference to the buffer menubar for listing the open buffers")
 
 (defun create-menus ()
   (let* ((mb (ltk:make-menubar))
