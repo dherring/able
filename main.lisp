@@ -375,8 +375,12 @@
      :accessor output-buffer
      :initform "")
    (index
-     :accessor index
-     :initform -1))
+    :accessor index
+    :initform -1)
+   (wrstamp
+    :accessor wrstamp
+    :initform 0))
+  
   (:documentation "Provides a bi-directional stream to act as a conduit
     for the user input and output in the listener. Typically bind an
     instance of this to all interesting streams during evaluation."))
@@ -444,9 +448,14 @@
   "Buffer 100 characters of output to reduce calls across the sub-process to Tk"
   (setf (output-buffer user-stream)
     (format nil "~A~A" (output-buffer
-                         user-stream) string))
-  (when (> (length (output-buffer user-stream)) 100)
-    (flush user-stream)))
+			user-stream) string))
+  (let* ((timestamp (get-internal-real-time))
+	 (elapsed (- timestamp (wrstamp user-stream))))
+    (when (or (> elapsed 200;internal-time-units-per-second
+		 )
+	      (> (length (output-buffer user-stream)) 100))
+      (flush user-stream)
+      (setf (wrstamp user-stream) timestamp))))
 
 (defmethod flush ((user-stream user-stream))
   (output *listener* (output-buffer user-stream))
@@ -813,12 +822,18 @@
       (command-history listener) 0))
   (prompt listener))
 
-(defmethod prompt ((listener listener) &key (prompt ">") (clear nil))
+(defun prompt1 (prompt)
+  (if prompt
+      (format nil "~%~a" prompt)
+      (format nil "~%~a> " (or (first (package-nicknames *package*))
+			       (package-name *package*)))))
+
+(defmethod prompt ((listener listener) &key prompt (clear nil))
   (when clear
     (let ((start-of-line (text-row-add (repl-insert-point listener) 0)))
       (ltk::delete-text (inferior-win listener) start-of-line "end")
       (setf (repl-insert-point listener) (ltk::get-cursor-pos (inferior-win listener)))))
-  (output listener (format nil "~%~a " prompt) "prompt"))
+  (output listener (prompt1 prompt) "prompt"))
 
 (defmethod get-user-input ((listener listener))
   (trim-code (ltk::get-text-range (inferior-win listener)
