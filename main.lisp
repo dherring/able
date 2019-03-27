@@ -497,6 +497,10 @@
      (list *key-cut* 'on-cut t)
      (list *key-copy* 'on-copy)
      (list *key-paste* 'on-paste)
+     (list *key-line-start* 'on-cursor-line-start)
+     (list *key-line-end* 'on-cursor-line-end)
+     (list *key-forward* 'on-cursor-forward)
+     (list *key-backward* 'on-cursor-backward)
      (list *key-select-all* 'on-select-all t)
      (list *key-reformat* 'on-re-indent t)
      (list *key-macro-expand* 'on-macro-expand t)
@@ -1363,6 +1367,18 @@
 (defmethod on-re-indent ((txt ltk:text))
   (indent-block txt)
   (match-paren txt))
+
+(defmethod on-cursor-line-start ((txt ltk:text))
+    (ltk::set-to-start-current-line txt))
+
+(defmethod on-cursor-line-end ((txt ltk:text))
+    (ltk::set-to-end-current-line txt))
+
+(defmethod on-cursor-forward ((txt ltk:text))
+    (ltk::move-cursor-pos txt 1))
+
+(defmethod on-cursor-backward ((txt ltk:text))
+    (ltk::move-cursor-pos txt -1))
 
 (defun focus-editor ()
   (ltk:focus (get-current-text-ctrl *buffer-manager*)))
