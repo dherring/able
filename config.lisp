@@ -77,12 +77,8 @@
 (defparameter *key-lookup* "<Control-d>" "Find definition in Hyperspec or src")
 (defparameter *key-asdf-load* "<Control-p>" "Load an ASDF system")
 (defparameter *key-reset-listener* "<Control-0>" "Reset the listener")
-
 (defparameter *key-line-start* "<Alt-s>" "Goto start of line")
 (defparameter *key-line-end* "<Alt-e>" "Goto end of line")
-(defparameter *key-forward* "<Alt-f>" "Move forward a character")
-(defparameter *key-backward* "<Alt-b>" "Move backward a character")
-
 
 (defparameter *indentation-rules*  '(("if" . 4)
                                      ("cond" . 6)
@@ -122,3 +118,5 @@
 ;; Interface language.
 ;; Valid options: 'en (English), 'eo (Esperanto)
 (setf translate:*language* 'en)
+
+
