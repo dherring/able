@@ -33,7 +33,9 @@
     "Close buffer" "Close buffer"
     "Select buffer" "Select buffer"
 
-    "Lisp"	"Lisp"
+    "Magic"	"Magic"
+    ;; ----------
+    "lisp" 	"lisp"
     ;; ----------
     "Macroexpand"	"Macroexpand"
     "Copy to REPL" "Copy to REPL"
@@ -117,7 +119,9 @@
     "Fermi bufron"
     "Select buffer" "Elekti bufron"
 
-    "Lisp"	"Lispo"
+    "Magic"	"Sorĉeroj"
+    ;; ----------
+    "lisp" 	"lisp"
     ;; ----------
     "Macroexpand"	"Makrogeneradi"
     "Copy to REPL" "Kopii al REPL"
