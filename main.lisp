@@ -6,7 +6,9 @@
 (defparameter *editor-frame* nil "Container for the text-editor control")
 (defparameter *listener* nil "The Lisp listener interface and command interpreter")
 (defparameter *statusbar* nil "The bar at the bottom of the screen")
+(defparameter *menubar* nil "The menubar itself.")
 (defparameter *buffer-menubar* nil "store a reference to the buffer menubar for listing the open buffers")
+(defparameter *special-menubar* nil "store a reference to the 'special' menubar for filetype-specific options")
 
 ;;; allocate sequential filenames for new files
 (let ((untitled 0))
@@ -472,7 +474,11 @@
      :accessor file-path)
    (plaintextp
      :initform nil
-     :accessor plaintextp)))
+     :accessor plaintextp)
+   (file-type
+     :initarg :file-type
+     :initform "lisp"
+     :accessor file-type)))
 
 (defclass buffer-manager ()
   ((buffers
@@ -572,7 +578,9 @@
   (if (not (find-buffer buffer-manager file-path))
       (let* ((newbuffer (make-instance 'buffer :file-path file-path :master *editor-frame*))
              (text-ctrl (ltk:textbox newbuffer)))
-        (when open-file-p (load-text newbuffer file-path))
+        (when open-file-p
+	  (load-text newbuffer file-path)
+	  (setf (file-type newbuffer) (filetype-from-pathstring file-path)))
         ; Once the text control is created, enable undo. Don't want to enable it earlier
         ; as when loading files, the file load becomes the first undoable event.
         (ltk:configure text-ctrl :undo 1)
@@ -608,7 +616,8 @@
     (pathname-message)
     (ltk:pack newbuffer :side :top :fill :both :expand t)
     (ltk:force-focus newtext)
-    (match-paren newtext)))
+    (match-paren newtext)
+    (update-special-menu newbuffer)))
 
 (defmethod select-buffer ((buffer-manager buffer-manager) (index integer))
   (select-buffer buffer-manager
@@ -1040,36 +1049,40 @@
     (destructuring-bind (key action) entry
       (add-key-binding ltk::*tk* key action))))
 
-(defun create-menus ()
-  (let* ((mb (ltk:make-menubar))
+(defmacro with-menu (menu &body body)
+  `(macrolet
+     ((action (name op)
+        (let ((key (function-key op)))
+	  (if key
+	    `(ltk:make-menubutton ,',menu (format nil "~A ~A" ,name ,key) #',op)
+	    `(ltk:make-menubutton ,',menu ,name #',op))))
+      (text-action (name op)
+        ;; an action that needs the current buffer
+	(let ((key (function-key op))
+	      (op-current-text
+		`(lambda ()
+		   (,op (get-current-text-ctrl *buffer-manager*)))))
+	  (if key
+	    `(ltk:make-menubutton ,',menu (format nil "~A ~A" ,name ,key)
+				  ,op-current-text)
+	    `(ltk:make-menubutton ,',menu ,name
+				  ,op-current-text))))
+      (separator ()
+        `(ltk:add-separator ,',menu)))
+     ,@body))
+
+
+(defun create-menus (&key (cur-buffer nil))
+  (setf *menubar* (ltk:make-menubar))
+  (let* ((mb *menubar*)
+	 (file-type (or (ignore-errors (file-type cur-buffer)) "lisp"))
          (mfile (ltk:make-menu mb #t"File"))
          (medit (ltk:make-menu mb #t"Edit"))
          (mbuffer (ltk:make-menu mb #t"Buffers"))
-         (mlisp (ltk:make-menu mb #t"Lisp")))
+         (mspecial (ltk:make-menu mb #t"Magic")))
     (setf *buffer-menubar* mbuffer)
+    (setf *special-menubar* mspecial)
 
-    (macrolet ((with-menu (menu &body body)
-                 `(macrolet
-                      ((action (name op)
-                         (let ((key (function-key op)))
-                           (if key
-                               `(ltk:make-menubutton ,',menu (format nil "~A ~A" ,name ,key) #',op)
-                               `(ltk:make-menubutton ,',menu ,name #',op))))
-                       (text-action (name op)
-                         ;; an action that needs the current buffer
-                         (let ((key (function-key op))
-			       (op-current-text
-				 `(lambda ()
-				    (,op (get-current-text-ctrl *buffer-manager*)))))
-
-			   (if key
-			     `(ltk:make-menubutton ,',menu (format nil "~A ~A" ,name ,key)
-						   ,op-current-text)
-			     `(ltk:make-menubutton ,',menu ,name
-						   ,op-current-text))))
-                       (separator ()
-                         `(ltk:add-separator ,',menu)))
-                    ,@body)))
       (with-menu mfile
         (action #t"New file" on-new-file)
         (action #t"Open file" on-open-file)
@@ -1099,26 +1112,44 @@
 	(action #t"Select buffer" on-select-file)
 	;; sacrificial placeholder for the current buffer list
 	;; update the magic number in update-current-buffers when adding/removing entries
-	(ltk:make-menubutton mbuffer "" nil))
-      (with-menu mlisp
-        (text-action #t"Macroexpand" on-macro-expand)
-        (text-action #t"Copy to REPL" on-copy-sexp-to-repl)
-        (ltk:make-menubutton mlisp #t"Complete symbol"
-                             (lambda ()
-                               (let* ((buffer (selected-buffer *buffer-manager*))
-                                      (text (ltk:textbox buffer)))
-                                 (unless (plaintextp buffer)
-                                   (on-code-complete text)))))
-        (text-action #t"CLHS lookup" on-lookup-definition)
-        (separator)
-        (action #t"(Re)load buffer" on-reload-file)
-        (action #t"Load file" on-load-file)
-        (action #t"Load ASDF" on-asdf-load)
-        (separator)
-        (action #t"Compile file" on-compile-file)
-        (separator)
-        (action #t"Invoke native debugger" on-invoke-debugger)
-        (action #t"Reset listener" on-reset-listener)))))
+	(ltk:make-menubutton mbuffer "" nil))))
+
+
+(defun create-special-menu (file-type)
+  (cond ((equal "lisp" file-type) (create-special-lisp-menu))
+	('T (create-special-txt-menu))))
+
+(defun create-special-txt-menu ()
+  (with-menu *special-menubar*
+    (action "..." (lambda () nil))))
+
+(defun create-special-lisp-menu ()
+  (with-menu *special-menubar* 
+    (text-action #t"Macroexpand" on-macro-expand)
+    (text-action #t"Copy to REPL" on-copy-sexp-to-repl)
+    (ltk:make-menubutton *special-menubar* #t"Complete symbol"
+     (lambda ()
+        (let* ((buffer (selected-buffer *buffer-manager*))
+               (text (ltk:textbox buffer)))
+          (unless (plaintextp buffer)
+     (on-code-complete text)))))
+    (text-action #t"CLHS lookup" on-lookup-definition)
+    (separator)
+    (action #t"(Re)load buffer" on-reload-file)
+    (action #t"Load file" on-load-file)
+    (action #t"Load ASDF" on-asdf-load)
+    (separator)
+    (action #t"Compile file" on-compile-file)
+    (separator)
+    (action #t"Invoke native debugger" on-invoke-debugger)
+    (action #t"Reset listener" on-reset-listener)))
+
+(defun update-special-menu (cur-buffer)
+  (let ((mb *menubar*)
+	(sb *special-menubar*)
+	(file-type (or (ignore-errors (file-type cur-buffer)) "lisp")))
+    (ltk:menu-delete sb 0)
+    (create-special-menu file-type)))
 
 (defun on-reset-listener (&optional event)
   (reset *listener*))
