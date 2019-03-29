@@ -119,21 +119,6 @@
 (defparameter *watch-directories* nil
   "A list of directories to watch and parse for defining forms")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+;; Interface language.
+;; Valid options: 'en (English), 'eo (Esperanto)
+(setf translate:*language* 'en)

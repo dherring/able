@@ -14,7 +14,7 @@
     (setf untitled 0))
   (defun get-untitled ()
     (concatenate 'string
-      "untitled #" (format nil "~d"
+      #t"untitled #" (format nil "~d"
                      (incf untitled)))))
 
 ;;; maintain the last directory accessed by load and save operations
@@ -280,7 +280,7 @@
           ((equal event 'paste)
            (apply-highlight txt (text-row-add cur-pos (- amount)) (text-row-add cur-pos 1)))
           ((equal event 'load)
-           (with-status-msg "highlighting..." (apply-highlight txt "1.0" "end"))))))
+           (with-status-msg #t"highlighting..." (apply-highlight txt "1.0" "end"))))))
 
 (defmethod goto ((text ltk:text) line)
   (let ((cursor-pos (format nil "~a.0" line)))
@@ -313,7 +313,7 @@
 (let ((last-search "") (last-find-at 0))
   (defmethod search-text ((editor ltk:text))
     (find-text editor (input-prompt *listener*
-                        "find:" (ltk::selected editor))))
+                        #t"find:" (ltk::selected editor))))
   (defmethod search-text-again ((editor ltk:text))
     (find-text editor last-search))
   (defmethod find-text ((editor ltk:text) search-text)
@@ -330,7 +330,7 @@
              (setf start-pos (search search-text txt-to-search :start2 last-find-at))
              (unless start-pos
                (setf start-pos (search search-text txt-to-search :start2 0))
-               (info-message "search wrapped around file")))
+               (info-message #t"search wrapped around file")))
             (t
               ; Previous search result was found in a longer file which has set
               ; the last found result beyond the maximum index of the text being
@@ -339,7 +339,7 @@
       (case start-pos
         ((nil)
          (setf last-find-at 0)
-         (error-message "search reached end of file"))
+         (error-message #t"search reached end of file"))
         (otherwise
           (setf start-idx (strpos-to-textidx txt-to-search start-pos))
           (setf end-pos (+ start-pos txt-to-find-len))
@@ -588,7 +588,7 @@
 
 (defmethod new-buffer-p ((buffer buffer))
   "Is this a new file?"
-  (search "untitled" (slot-value buffer 'file-path)))
+  (search #t"untitled" (slot-value buffer 'file-path)))
 
 (defmethod saved-buffer-p ((buffer buffer))
   "Is this buffer saved?"
@@ -768,7 +768,7 @@
               (transform-file-list
                 (filter-matches files text)))
             (case (length pathname-matches)
-              (0 (error-message "no matches"))
+              (0 (error-message #t"no matches"))
               (1 (insert-command listener (correct-path (cdr (first pathname-matches)))))
               (otherwise
                 (insert-command listener
@@ -794,7 +794,7 @@
       ; Re-bind a new instance of USER-STREAM on each EVAL, in case it's
       ; required by a call to READ*, ensuring a pristine input stream.
       (with-able-streams 'user-stream
-        (with-status-msg "evaluating..."
+        (with-status-msg #t"evaluating..."
           ; Note the explicit handling of REPL variables.
           (handler-case (let ((form (read-from-string code-string)))
                           (setq +++ ++ ++ + + - - form)
@@ -973,13 +973,15 @@
       (otherwise user-answer))))
 
 (defmethod yes-no ((listener listener) message
-                   &optional (affirmative-answers '("y" "yes")) (default-answer "yes"))
+                   &optional
+		   (affirmative-answers (list #t"y" #t"yes"))
+		   (default-answer #t"yes"))
   "Prompts the user for input where any of affirmative-answers constitues 'yes'."
   (let ((user-answer (input-prompt listener message default-answer)))
     (prompt listener)
     (member user-answer affirmative-answers :test 'string-equal)))
 
-(defmethod get-filename ((listener listener) &optional (text "open:"))
+(defmethod get-filename ((listener listener) &optional (text #t"open:"))
   (let (filepath)
     (with-temporary-value (complete-mode listener) 'pathname
       (let ((last-directory (format nil "~a/" (correct-path (get-last-directory)))))
@@ -1040,10 +1042,10 @@
 
 (defun create-menus ()
   (let* ((mb (ltk:make-menubar))
-         (mfile (ltk:make-menu mb "File"))
-         (medit (ltk:make-menu mb "Edit"))
-         (mbuffer (ltk:make-menu mb "Buffers"))
-         (mlisp (ltk:make-menu mb "Lisp")))
+         (mfile (ltk:make-menu mb #t"File"))
+         (medit (ltk:make-menu mb #t"Edit"))
+         (mbuffer (ltk:make-menu mb #t"Buffers"))
+         (mlisp (ltk:make-menu mb #t"Lisp")))
     (setf *buffer-menubar* mbuffer)
 
     (macrolet ((with-menu (menu &body body)
@@ -1055,65 +1057,68 @@
                                `(ltk:make-menubutton ,',menu ,name #',op))))
                        (text-action (name op)
                          ;; an action that needs the current buffer
-                         (let ((key (function-key op)))
-                           `(ltk:make-menubutton ,',menu
-                                                 ,(if key
-                                                      (format nil "~A ~A" name key)
-                                                      name)
-                                                 (lambda ()
-                                                   (,op (get-current-text-ctrl *buffer-manager*))))))
+                         (let ((key (function-key op))
+			       (op-current-text
+				 `(lambda ()
+				    (,op (get-current-text-ctrl *buffer-manager*)))))
+
+			   (if key
+			     `(ltk:make-menubutton ,',menu (format nil "~A ~A" ,name ,key)
+						   ,op-current-text)
+			     `(ltk:make-menubutton ,',menu ,name
+						   ,op-current-text))))
                        (separator ()
                          `(ltk:add-separator ,',menu)))
                     ,@body)))
       (with-menu mfile
-        (action "New file" on-new-file)
-        (action "Open file" on-open-file)
-	(action "Open file browser" on-open-file-browser)
+        (action #t"New file" on-new-file)
+        (action #t"Open file" on-open-file)
+	(action #t"Open file browser" on-open-file-browser)
         (separator)
-        (action "Save file" on-save-file)
-        (action "Save as file" on-save-as-file)
-	(action "Save as file browser" on-save-as-file-browser)
+        (action #t"Save file" on-save-file)
+        (action #t"Save as file" on-save-as-file)
+	(action #t"Save as file browser" on-save-as-file-browser)
         (separator)
-        (action "Exit" on-quit))
+        (action #t"Exit" on-quit))
       (with-menu medit
-        (text-action "Cut" on-cut)
-        (text-action "Copy" on-copy)
-        (text-action "Paste" on-paste)
+        (text-action #t"Cut" on-cut)
+        (text-action #t"Copy" on-copy)
+        (text-action #t"Paste" on-paste)
         (separator)
-        (text-action "Select all" on-select-all)
-        (text-action "Reindent" on-re-indent)
+        (text-action #t"Select all" on-select-all)
+        (text-action #t"Reindent" on-re-indent)
         (separator)
-        (action "Find" on-search)
-        (action "Find again" on-search-again)
-        (action "Goto line" on-goto))
+        (action #t"Find" on-search)
+        (action #t"Find again" on-search-again)
+        (action #t"Goto line" on-goto))
       (with-menu mbuffer
-        (action "Next buffer" on-next-file)
+        (action #t"Next buffer" on-next-file)
         (separator)
-        (action "Close buffer" on-close-file)
+        (action #t"Close buffer" on-close-file)
 	(separator)
-	(action "Select buffer" on-select-file)
+	(action #t"Select buffer" on-select-file)
 	;; sacrificial placeholder for the current buffer list
 	;; update the magic number in update-current-buffers when adding/removing entries
 	(ltk:make-menubutton mbuffer "" nil))
       (with-menu mlisp
-        (text-action "Macroexpand" on-macro-expand)
-        (text-action "Copy to REPL" on-copy-sexp-to-repl)
-        (ltk:make-menubutton mlisp "Complete symbol"
+        (text-action #t"Macroexpand" on-macro-expand)
+        (text-action #t"Copy to REPL" on-copy-sexp-to-repl)
+        (ltk:make-menubutton mlisp #t"Complete symbol"
                              (lambda ()
                                (let* ((buffer (selected-buffer *buffer-manager*))
                                       (text (ltk:textbox buffer)))
                                  (unless (plaintextp buffer)
                                    (on-code-complete text)))))
-        (text-action "CLHS lookup" on-lookup-definition)
+        (text-action #t"CLHS lookup" on-lookup-definition)
         (separator)
-        (action "(Re)load buffer" on-reload-file)
-        (action "Load file" on-load-file)
-        (action "Load ASDF" on-asdf-load)
+        (action #t"(Re)load buffer" on-reload-file)
+        (action #t"Load file" on-load-file)
+        (action #t"Load ASDF" on-asdf-load)
         (separator)
-        (action "Compile file" on-compile-file)
+        (action #t"Compile file" on-compile-file)
         (separator)
-        (action "Invoke native debugger" on-invoke-debugger)
-        (action "Reset listener" on-reset-listener)))))
+        (action #t"Invoke native debugger" on-invoke-debugger)
+        (action #t"Reset listener" on-reset-listener)))))
 
 (defun on-reset-listener (&optional event)
   (reset *listener*))
@@ -1126,12 +1131,12 @@
   (search-text-again (get-current-text-ctrl *buffer-manager*)))
 
 (defun on-goto (&optional event)
-  (let ((input (input-prompt *listener* "goto:")))
+  (let ((input (input-prompt *listener* #t"goto:")))
     (cond ((eq (length input) 0)
            nil)
           ((typep (read-from-string input) 'integer)
            (goto (get-current-text-ctrl *buffer-manager*) (parse-integer input)))
-          (t (error-message "non integer argument supplied to goto"))))
+          (t (error-message #t"non integer argument supplied to goto"))))
   (prompt *listener* :clear t))
 
 (defun open-file (filepath)
@@ -1145,7 +1150,7 @@
              (if (equal (find-buffer *buffer-manager* filepath) nil)
                  (add-buffer *buffer-manager* filepath t)
                  (select-buffer *buffer-manager* filepath)))
-            (t (error-message "file not found")))
+            (t (error-message #t"file not found")))
       file-exists-p)))
 
 (defun on-open-file (&optional event)
@@ -1157,7 +1162,7 @@
   (open-file (ltk:get-open-file)))
 
 (defun on-load-file (&optional event)
-  (let* ((filepath (get-filename *listener* "load:"))
+  (let* ((filepath (get-filename *listener* #t"load:"))
          (pathname (open-file filepath)))
     (when pathname
       (evaluator *listener*
@@ -1179,13 +1184,13 @@
 (defun on-save-file (&optional event)
   (let* ((file (selected-buffer *buffer-manager*))
          (path (if (new-buffer-p file)
-                   (get-filename *listener* "save:")
+                   (get-filename *listener* #t"save:")
                    (file-path file))))
     (save-file file path)))
 
 (defun on-save-as-file (&optional event)
   (let* ((file (selected-buffer *buffer-manager*))
-         (path (get-filename *listener* "save:")))
+         (path (get-filename *listener* #t"save:")))
     (save-file file path)))
 
 (defun on-save-as-file-browser (&optional event)
@@ -1201,7 +1206,7 @@
           (evaluator *listener*
             (format nil "(load \"~a\")" file-path))
           (prompt *listener*))
-        (error-message "please save before loading"))))
+        (error-message #t"please save before loading"))))
 
 (defun on-compile-file (&optional event)
   (let ((buffer (selected-buffer *buffer-manager*)))
@@ -1211,7 +1216,7 @@
             (format nil
               "(compile-file \"~a\")" (file-path (selected-buffer *buffer-manager*))))
           (prompt *listener*))
-        (error-message "please save before compiling"))))
+        (error-message #t"please save before compiling"))))
 
 (defun on-new-file (&optional event)
   (add-buffer *buffer-manager* (get-untitled)))
@@ -1220,11 +1225,11 @@
   (let ((curbuffer (selected-buffer *buffer-manager*)))
     (cond ((saved-buffer-p curbuffer)
            (close-buffer curbuffer *buffer-manager*))
-          (t (when (yes-no *listener* "unsaved file...close anyway?")
+          (t (when (yes-no *listener* #t"unsaved file...close anyway?")
                (close-buffer curbuffer *buffer-manager*))))))
 
 (defun on-asdf-load (&optional event)
-  (let ((system (input-prompt *listener* "system:")))
+  (let ((system (input-prompt *listener* #t"system:")))
     (when system
       (evaluator *listener*
         (concatenate 'string
@@ -1239,7 +1244,7 @@
 
 (defun on-select-file (&optional n)
   (unless (integerp n)
-    (setf n (parse-integer (input-prompt *listener* "buffer number:"))))
+    (setf n (parse-integer (input-prompt *listener* #t"buffer number:"))))
   (when (integerp n)
     (select-buffer *buffer-manager*
       ;; compensate for the reversed order
@@ -1268,7 +1273,7 @@
   (let ((unsaved-buffers (all-saved-buffer-p *buffer-manager*)))
     (cond ((= (length unsaved-buffers) 0)
            (shutdown))
-          (t (when (yes-no *listener* "unsaved files exist...quit anyway?")
+          (t (when (yes-no *listener* #t"unsaved files exist...quit anyway?")
                (shutdown))))))
 
 (defun on-escape (&optional event)
@@ -1280,7 +1285,7 @@
       (case (get (tstree:get-metadata *symbols* symbol) :type)
         (user (on-navigate-to-definition symbol))
         (system (hyperspec-lookup symbol))
-        (otherwise (info-message "No Hyperspec entry or src location found"))))))
+        (otherwise (info-message #t"No Hyperspec entry or src location found"))))))
 
 (defmethod on-macro-expand ((text ltk:text))
   (let ((sexp (sexp-before-cursor text)))
