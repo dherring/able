@@ -10,10 +10,11 @@
   :licence "MIT"
   :description "A Common Lisp editor"
   :long-description "A Common Lisp editor for MacOS X, Linux and Windows"
-  :depends-on (:ltk :trivial-gray-streams :cl-fad)
+  :depends-on (:ltk :trivial-gray-streams :cl-fad :cl-ppcre :translate)
   :serial t
   :components ((:file "defpackage")
                (:file "config")
+	       (:file "intl")
                (:file "macros")
                (:file "utils")
                (:file "tstree")
@@ -22,6 +23,8 @@
                (:file "controls")
                (:file "parser")
                (:file "main")))
+
+
 
 
 
