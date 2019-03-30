@@ -23,6 +23,7 @@
 
     "Select all"	"Select all"
     "Reindent"	"Reindent"
+    "Replace" "Replace"
     "Find"  	"Find"
     "Find again"	"Find again"
     "Goto line"	"Goto line"
@@ -50,6 +51,7 @@
 
     "evaluating..." "evaluating..."
     "highlighting..." "highlighting..."
+    "replacing..." "replacing..."
 
     ;; info messages
     "search wrapped around file" "search wrapped around file"
@@ -82,6 +84,8 @@
     "open:"	"open:"
     "goto:"	"goto:"
     "system:"	"system:"
+    "regex:" "regex:"
+    "replacement:" "replacement:"
     "buffer number:" "buffer number:"
     "load:"	"load:"
     "save:"	"save:"
@@ -108,6 +112,7 @@
 
     "Select all"	"Elekti ĉion"
     "Reindent"	"Rekrommarĝeni"
+    "Replace" "Anstataŭigi"
     "Find"  	"Serĉi"
     "Find again"	"Reserĉi"
     "Goto line"	"Aliri linion"
@@ -136,6 +141,7 @@
 
     "evaluating..." "taksanta..."
     "highlighting..." "prilumanta..."
+    "replacing..." "anstataŭigata..."
 
     ;; info messages
     "search wrapped around file" "serĉado ĉirkaŭfluis en dosiero"
@@ -169,7 +175,11 @@
     "buffer number:" "bufrnombro:"
     "load:"	"ŝarĝi:"
     "save:"	"konservi:"
+    "regex:" "regulesprimo:"
+    "replacement:" "anstataŭo:"
     "unsaved file...close anyway?"
     "nekonservita doserio...ĉu kvankam ĉesi?"
     "unsaved files exist...quit anyway?"
     "nekonservitaj dosieroj ekzistas...ĉu kvankam ĉesi?"))
+
+

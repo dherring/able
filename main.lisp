@@ -158,7 +158,7 @@
       (multiple-value-bind (token start end) (find-current-function str pos)
         (declare (ignore end))
         (when token
-          (setf indent (get-indent-level token))
+             (setf indent (get-indent-level token))
           (setf start (+ start indent))
           (ltk::insert-text txt (make-string start :initial-element #\Space)))))))
 
@@ -283,6 +283,20 @@
            (apply-highlight txt (text-row-add cur-pos (- amount)) (text-row-add cur-pos 1)))
           ((equal event 'load)
            (with-status-msg #t"highlighting..." (apply-highlight txt "1.0" "end"))))))
+
+(defun regex-replace-selected-text (regex replacement)
+  "Replace selected text matching the given regex."
+  (let* ((selected-text (get-selected-text))
+         (replaced (regex-replace regex selected-text replacement)))
+    (if replaced
+        (replace-selected-text replaced))))
+
+(defun replace-selected-text (new-string)
+  "Replace selected text with the given string.
+  Right now it adds 2 actions in the undo-tree, which isn't ideal..."
+  (let* ((text (get-current-text-ctrl *buffer-manager*)))
+    (ltk::delete-text text "sel.first" "sel.last")
+    (ltk::insert-text text new-string)))
 
 (defmethod goto ((text ltk:text) line)
   (let ((cursor-pos (format nil "~a.0" line)))
@@ -505,10 +519,9 @@
      (list *key-paste* 'on-paste)
      (list *key-line-start* 'on-cursor-line-start)
      (list *key-line-end* 'on-cursor-line-end)
-     (list *key-forward* 'on-cursor-forward)
-     (list *key-backward* 'on-cursor-backward)
      (list *key-select-all* 'on-select-all t)
      (list *key-reformat* 'on-re-indent t)
+     (list *key-replace* 'on-regex-replace)
      (list *key-macro-expand* 'on-macro-expand t)
      (list *key-copy-to-repl* 'on-copy-sexp-to-repl t)
      ;; suppress code-complete; it needs special treatment
@@ -1100,6 +1113,7 @@
         (separator)
         (text-action #t"Select all" on-select-all)
         (text-action #t"Reindent" on-re-indent)
+        (text-action #t"Replace" on-regex-replace)
         (separator)
         (action #t"Find" on-search)
         (action #t"Find again" on-search-again)
@@ -1404,17 +1418,29 @@
   (indent-block txt)
   (match-paren txt))
 
+(defun on-regex-replace (&optional ignored)
+  "Regex-replace on current buffer. Can accept an 'ignored' argument,
+  since accepting text (from 'text-action' or what have) can sometimes
+  mean the listener is passed, which would be invalid."
+  (let* ((text (get-current-text-ctrl *buffer-manager*))
+         (cur-cursor-pos (ltk::get-cursor-pos text))
+         (regex (input-prompt *listener* #t"regex:"))
+         (replacement (input-prompt *listener* #t"replacement:")))
+    (with-status-msg #t"replacing..."
+      (when (not (get-selected-text))
+        (ltk::select-all text))
+      
+      (regex-replace-selected-text regex replacement)
+      
+      (highlight text 'load)
+      (prompt *listener* :clear t)
+      (ltk::set-cursor-pos text cur-cursor-pos))))
+
 (defmethod on-cursor-line-start ((txt ltk:text))
     (ltk::set-to-start-current-line txt))
 
 (defmethod on-cursor-line-end ((txt ltk:text))
     (ltk::set-to-end-current-line txt))
-
-(defmethod on-cursor-forward ((txt ltk:text))
-    (ltk::move-cursor-pos txt 1))
-
-(defmethod on-cursor-backward ((txt ltk:text))
-    (ltk::move-cursor-pos txt -1))
 
 (defun focus-editor ()
   (ltk:focus (get-current-text-ctrl *buffer-manager*)))
@@ -1479,4 +1505,12 @@
   (add-user-load-paths)
   (parse-watch-systems)
   (create-widgets))
+
+
+
+
+
+
+
+
 

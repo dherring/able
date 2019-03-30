@@ -67,6 +67,7 @@
 (defparameter *key-copy* "<Control-c>" "Copy the selected text")
 (defparameter *key-paste* "<Control-v>" "Paste the selected text")
 (defparameter *key-select-all* "<Control-a>" "Select all text in the file")
+(defparameter *key-replace* "<Control-t>" "Replace text with regexp")
 (defparameter *key-goto-line* "<Control-i>" "Goto line number")
 (defparameter *key-reformat* "<Control-j>" "Indent the current form")
 (defparameter *key-macro-expand* "<Control-m>" "Macroexpand form in listener")
@@ -118,5 +119,7 @@
 ;; Interface language.
 ;; Valid options: 'en (English), 'eo (Esperanto)
 (setf translate:*language* 'en)
+
+
 
 
