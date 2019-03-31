@@ -30,6 +30,7 @@
 
     "Buffers"	"Buffers"
     ;; ----------
+    "Last buffer" "Last buffer"
     "Next buffer" "Next buffer"
     "Close buffer" "Close buffer"
     "Select buffer" "Select buffer"
@@ -119,6 +120,7 @@
 
     "Buffers"	"Bufroj"
     ;; ----------
+    "Last buffer" "Malsekva bufro"
     "Next buffer" "Sekva bufro"
     "Close buffer"
     "Fermi bufron"
@@ -181,5 +183,7 @@
     "nekonservita doserio...ĉu kvankam ĉesi?"
     "unsaved files exist...quit anyway?"
     "nekonservitaj dosieroj ekzistas...ĉu kvankam ĉesi?"))
+
+
 
 

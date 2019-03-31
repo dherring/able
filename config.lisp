@@ -59,8 +59,9 @@
 (defparameter *key-save-as-file-browser* "<Control-Alt-s>" "Save the current file under a new name, with browser GUI")
 (defparameter *key-reload-file* "<Control-r>" "Re-load the current file")
 (defparameter *key-compile-file* "<Control-k>" "Compile the current file")
-(defparameter *key-next-file* "<Control-b>" "Cycle through open files")
-(defparameter *key-select-file* "<Control-B>" "Select open file")
+(defparameter *key-previous-file* "<Control-B>" "Cycle to previous open files")
+(defparameter *key-next-file* "<Control-b>" "Cycle to next open files")
+(defparameter *key-select-file* "<Control-Alt-b>" "Select open file")
 (defparameter *key-find* "<Control-f>" "Find text in current file")
 (defparameter *key-find-again* "<Control-g>" "Repeat the previous search")
 (defparameter *key-cut* "<Control-x>" "Cut the selected text")
@@ -119,6 +120,8 @@
 ;; Interface language.
 ;; Valid options: 'en (English), 'eo (Esperanto)
 (setf translate:*language* 'en)
+
+
 
 
 

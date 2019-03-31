@@ -643,25 +643,37 @@
     (setf (file-path buffer) file-path))
   (pathname-message))
 
-(defmethod get-next-buffer ((buffer buffer) (buffer-manager buffer-manager))
-  (let* ((next)
-         (retval)
-         (buffers (reverse (buffers buffer-manager))))
-    (loop for b in buffers do
-      (unless retval
-        (setf retval b))
-      (when next
-        (setf retval b)
-        (setf next nil))
-      (if (string= (file-path b) (file-path buffer))
-          (setf next t)))
-    (when retval
-      (file-path retval))))
+(defmacro get-directional-buffer-name (index-change greater-or-less-than limit default-pos)
+  "Generate code for getting the name of a certainly-directioned buffer-- I.E., next/previous."
+  `(let* ((buffers (reverse (buffers buffer-manager)))
+         (cur-buffer-pos (position buffer buffers))
+         (other-buffer-pos (,index-change cur-buffer-pos)))
+    (when (,greater-or-less-than cur-buffer-pos ,limit)
+      (setq other-buffer-pos ,default-pos))
+    (file-path (nth other-buffer-pos buffers ))))
+
+;; these two methods have almost identifcal code
+(defmethod get-next-buffer-name ((buffer buffer) (buffer-manager buffer-manager))
+  "Return the name of the next buffer."
+  (get-directional-buffer-name 1+ >= (1- (length buffers)) 0))
+
+(defmethod get-previous-buffer-name ((buffer buffer) (buffer-manager buffer-manager))
+  "Return the name of the previous buffer."
+  (get-directional-buffer-name 1- <= 0 (1- (length buffers))))
+
+(defmacro select-directional-buffer (directional-buffer-name-function)
+  "Return code for selecting a buffer (as selected by the passed function returning it's name)."
+  `(let ((other-buffer (,directional-buffer-name-function buffer buffer-manager)))
+     (when (and other-buffer (not (string= (file-path buffer) other-buffer)))
+       (select-buffer buffer-manager other-buffer))))
 
 (defmethod select-next-buffer ((buffer-manager buffer-manager) (buffer buffer))
-  (let ((next-buffer (get-next-buffer buffer buffer-manager)))
-    (when (and next-buffer (not (string= (file-path buffer) next-buffer)))
-      (select-buffer buffer-manager next-buffer))))
+  "Select the next buffer."
+  (select-directional-buffer get-next-buffer-name))
+
+(defmethod select-previous-buffer ((buffer-manager buffer-manager) (buffer buffer))
+  "Select the previous buffer."
+  (select-directional-buffer get-previous-buffer-name))
 
 (defmethod at-least-one-buffer-p ((buffer-manager buffer-manager))
   (> (length (buffers buffer-manager)) 0))
@@ -675,14 +687,13 @@
     (ltk::reset-modify editor)))
 
 (defmethod close-buffer ((buffer buffer) (buffer-manager buffer-manager))
+  (select-next-buffer buffer-manager buffer)
   (setf (buffers buffer-manager) (remove buffer (buffers buffer-manager) :test #'equalp))
   (update-current-buffers buffer-manager)
-  (let ((nextfile (get-next-buffer buffer buffer-manager)))
-    (select-next-buffer buffer-manager buffer)
-    (ltk:pack-forget buffer)
-    (case (at-least-one-buffer-p buffer-manager)
-      ((t) (pathname-message))
-      ((nil) (shutdown)))))
+  (ltk:pack-forget buffer)
+  (case (at-least-one-buffer-p buffer-manager)
+    ((t) (pathname-message))
+    ((nil) (shutdown))))
 
 (defclass listener (ltk:frame)
   ((inferior-win
@@ -1037,6 +1048,7 @@
      (list *key-find-again* 'on-search-again)
      (list *key-goto-line* 'on-goto)
      (list *key-asdf-load* 'on-asdf-load)
+     (list *key-previous-file* 'on-previous-file)
      (list *key-next-file* 'on-next-file)
      (list *key-select-file* 'on-select-file)
      (list *key-reload-file* 'on-reload-file)
@@ -1119,6 +1131,7 @@
         (action #t"Find again" on-search-again)
         (action #t"Goto line" on-goto))
       (with-menu mbuffer
+        (action #t"Last buffer" on-previous-file)
         (action #t"Next buffer" on-next-file)
         (separator)
         (action #t"Close buffer" on-close-file)
@@ -1286,6 +1299,9 @@
 
 (defun on-next-file (&optional event)
   (select-next-buffer *buffer-manager* (selected-buffer *buffer-manager*)))
+
+(defun on-previous-file (&optional event)
+  (select-previous-buffer *buffer-manager* (selected-buffer *buffer-manager*)))
 
 (defun on-select-file (&optional n)
   (unless (integerp n)
@@ -1505,6 +1521,10 @@
   (add-user-load-paths)
   (parse-watch-systems)
   (create-widgets))
+
+
+
+
 
 
 
