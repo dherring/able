@@ -203,6 +203,23 @@
               (setf best (subseq this 0 len)))))
     best))
 
+(defun string-merge (string-list &optional (seperator ""))
+  "Merge a list of strings/items into a single string."
+  (reduce (lambda (string-a string-b)
+            (format nil "~A~A~A" string-a seperator string-b))
+      string-list))
+
+(defun regex-replace (regex string replacement)
+  "Replace all regex matches in a string with another string.
+  This only exists since using #'regex-replace-all directly doesn't always
+  handle regexes right on multi-lined strings (I.E., '^')."
+  (string-merge 
+    (mapcar (lambda (line) (cl-ppcre:regex-replace-all regex line replacement))
+      (split string #\newline))
+    #\newline))
+  
+  
+
 ;;;;;;;;;;;;;; environment ;;;;;;;;;;;;;;
 
 (defun shutdown ()
@@ -260,3 +277,5 @@
             (ccl:external-process-input-stream p))))
       (sleep 1))
     process))
+
+

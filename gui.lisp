@@ -36,6 +36,19 @@
   (format-wish "~a mark set insert \"insert ~a~ac\""
     (widget-path text) (if (plusp count) #\+ #\-) (abs count)))
 
+(defgeneric set-to-start-current-line (object)
+  (:documentation "Move the cursor to the start of it's current line."))
+
+(defmethod set-to-start-current-line ((text text))
+    (set-cursor-pos text "\"insert linestart\""))
+
+(defgeneric set-to-end-current-line (object)
+  (:documentation "Move the cursor to the end of it's current line."))
+
+(defmethod set-to-end-current-line ((text text))
+  (set-cursor-pos text "\"insert lineend\""))
+
+
 (defmethod scroll-to ((txt text) pos)
   (format-wish "~a see ~a" (widget-path txt) pos))
 
@@ -150,6 +163,8 @@
 (defmethod panecget ((pw paned-window) pane attribute)
   (format-wish "senddatastring [~a panecget ~a -~a]" (widget-path pw) (widget-path pane) attribute)
   (read-data))
+
+
 
 
 
